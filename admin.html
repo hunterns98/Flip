@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flip 7 – Admin</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<div class="page page-wide" id="app">
+
+  <!-- ── CREATE ROOM ────────────────────────────────────── -->
+  <section id="screen-create">
+    <div class="game-logo">
+      <h1>FLIP 7</h1>
+      <div class="tagline">Admin – Tạo Phòng</div>
+    </div>
+
+    <div class="join-section">
+      <div class="panel">
+        <div class="panel-title">🛠 Tạo phòng mới</div>
+        <div class="form-group">
+          <label>Tên Admin</label>
+          <input type="text" id="admin-name" placeholder="Tên của bạn..." maxlength="20" autocomplete="off">
+        </div>
+        <div id="create-error" class="error-msg" style="display:none"></div>
+        <button class="btn btn-primary" id="btn-create">✨ Tạo Phòng</button>
+        <div style="margin-top:16px; text-align:center;">
+          <a href="index.html" class="btn btn-ghost btn-sm">🎮 Vào phòng (người chơi)</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ADMIN LOBBY ─────────────────────────────────────── -->
+  <section id="screen-admin-lobby" style="display:none">
+    <div class="game-logo" style="padding-top:20px;">
+      <h1>FLIP 7</h1>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Phòng của bạn</div>
+      <div class="room-code" id="admin-room-code" title="Nhấn để sao chép">------</div>
+      <div class="room-code-label">Chia sẻ mã này cho người chơi</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">
+        Người chơi
+        <span class="player-count" id="admin-player-count">0/15</span>
+      </div>
+      <div id="admin-player-list"></div>
+      <div class="info-msg" id="admin-waiting-msg">Đợi người chơi tham gia...</div>
+    </div>
+
+    <button class="btn btn-primary" id="btn-start" disabled>🎮 Bắt đầu Game</button>
+    <div class="info-msg" id="start-hint" style="margin-top:8px;">Cần ít nhất 2 người chơi</div>
+  </section>
+
+  <!-- ── ADMIN GAME VIEW ─────────────────────────────────── -->
+  <section id="screen-admin-game" style="display:none">
+
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 0 8px;">
+      <div>
+        <div class="player-name-display" id="admin-name-display">Admin</div>
+        <div style="font-size:0.8rem;color:var(--text-dim);">Phòng: <span id="admin-room-display">—</span></div>
+      </div>
+      <div class="round-label">Vòng <span id="admin-round">1</span></div>
+    </div>
+
+    <!-- Current turn highlight -->
+    <div class="panel" style="padding:16px;">
+      <div class="panel-title">Lượt hiện tại</div>
+      <div id="current-turn-display" style="font-size:1.2rem; font-weight:700; color:var(--gold);">—</div>
+      <div class="turn-indicator" id="admin-turn-status" style="margin-top:8px;">—</div>
+    </div>
+
+    <!-- Deck info -->
+    <div class="panel">
+      <div class="panel-title">Bộ bài</div>
+      <div class="deck-info">
+        <span>Còn lại:</span>
+        <span class="deck-count-badge" id="deck-count">—</span>
+        <span>lá</span>
+      </div>
+    </div>
+
+    <!-- All players game state -->
+    <div class="panel">
+      <div class="panel-title">Bảng xếp hạng</div>
+      <div id="admin-game-players"></div>
+    </div>
+
+    <!-- Admin controls -->
+    <div class="panel">
+      <div class="panel-title">⚠️ Điều khiển Admin</div>
+      <button class="btn btn-danger btn-sm" id="btn-force-end-round" style="margin-bottom:8px;">
+        ⏭ Kết thúc vòng ngay
+      </button>
+      <button class="btn btn-ghost btn-sm" id="btn-reset-game">
+        🔄 Đặt lại game
+      </button>
+    </div>
+  </section>
+
+  <!-- ── WINNER SCREEN ───────────────────────────────────── -->
+  <section id="screen-admin-winner" style="display:none">
+    <div class="panel" style="margin-top:40px;">
+      <div class="winner-screen" id="admin-winner-content"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Điểm cuối cùng</div>
+      <div id="admin-final-scores"></div>
+    </div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-primary" id="btn-new-game">🔄 Game Mới</button>
+      <button class="btn btn-ghost" onclick="location.href='admin.html'">🏠 Trang chủ</button>
+    </div>
+  </section>
+
+</div><!-- /app -->
+
+<script src="firebase.js"></script>
+<script src="deck.js"></script>
+<script src="game.js"></script>
+<script src="ui.js"></script>
+<script>
+  const state = {
+    roomId: null,
+    adminId: null,
+    adminName: null,
+    roomData: null,
+    unsubscribe: null,
+  };
+
+  // ─── Session ─────────────────────────────────────────────────
+  function saveAdminSession() {
+    sessionStorage.setItem('flip7_admin', JSON.stringify({
+      roomId: state.roomId,
+      adminId: state.adminId,
+      adminName: state.adminName,
+    }));
+  }
+
+  function loadAdminSession() {
+    try { return JSON.parse(sessionStorage.getItem('flip7_admin')); }
+    catch { return null; }
+  }
+
+  // ─── Screens ─────────────────────────────────────────────────
+  function showScreen(id) {
+    ['screen-create','screen-admin-lobby','screen-admin-game','screen-admin-winner']
+      .forEach(s => document.getElementById(s).style.display = 'none');
+    document.getElementById(id).style.display = 'block';
+  }
+
+  // ─── Create room ──────────────────────────────────────────────
+  document.getElementById('btn-create').addEventListener('click', async () => {
+    const name = document.getElementById('admin-name').value.trim();
+    const errEl = document.getElementById('create-error');
+    errEl.style.display = 'none';
+
+    if (!name) { showErr(errEl, 'Vui lòng nhập tên!'); return; }
+
+    UIModule.setLoading('btn-create', true);
+    try {
+      const { roomId, playerId } = await GameModule.createRoom(name);
+      state.roomId = roomId;
+      state.adminId = playerId;
+      state.adminName = name;
+      saveAdminSession();
+      startListening();
+    } catch (e) {
+      showErr(errEl, e.message);
+    } finally {
+      UIModule.setLoading('btn-create', false);
+    }
+  });
+
+  function showErr(el, msg) {
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  // ─── Room code copy ───────────────────────────────────────────
+  document.getElementById('admin-room-code').addEventListener('click', () => {
+    if (!state.roomId) return;
+    navigator.clipboard.writeText(state.roomId)
+      .then(() => UIModule.showToast('Đã sao chép!', 'success', 2000));
+  });
+
+  // ─── Start game ───────────────────────────────────────────────
+  document.getElementById('btn-start').addEventListener('click', async () => {
+    UIModule.setLoading('btn-start', true);
+    try {
+      await GameModule.startGame(state.roomId, state.adminId);
+    } catch (e) {
+      UIModule.showToast(e.message, 'danger');
+    } finally {
+      UIModule.setLoading('btn-start', false);
+    }
+  });
+
+  // ─── Force end round ──────────────────────────────────────────
+  document.getElementById('btn-force-end-round').addEventListener('click', async () => {
+    if (!confirm('Kết thúc vòng này ngay?')) return;
+    const data = state.roomData;
+    if (!data) return;
+
+    const playerIds = data.playerOrder || Object.keys(data.players);
+    const updates = { roundStatus: 'endingRound' };
+    playerIds.forEach(pid => {
+      updates[`players.${pid}.status`] = 'stopped';
+    });
+
+    try {
+      await db.collection('rooms').doc(state.roomId).update(updates);
+      UIModule.showToast('Đã kết thúc vòng!', 'warn');
+    } catch (e) {
+      UIModule.showToast(e.message, 'danger');
+    }
+  });
+
+  // ─── Reset game ───────────────────────────────────────────────
+  document.getElementById('btn-reset-game').addEventListener('click', async () => {
+    if (!confirm('Đặt lại game và về phòng chờ?')) return;
+    const data = state.roomData;
+    if (!data) return;
+
+    const playerIds = data.playerOrder || Object.keys(data.players);
+    const updates = { gameStatus: 'waiting', round: 1, currentPlayer: null, deck: [], roundStatus: 'playing', flip7Winner: null };
+    playerIds.forEach(pid => {
+      updates[`players.${pid}.totalScore`] = 0;
+      updates[`players.${pid}.roundScore`] = 0;
+      updates[`players.${pid}.cardsInRound`] = [];
+      updates[`players.${pid}.status`] = 'playing';
+    });
+
+    try {
+      await db.collection('rooms').doc(state.roomId).update(updates);
+      UIModule.showToast('Đã đặt lại game!', 'info');
+    } catch (e) {
+      UIModule.showToast(e.message, 'danger');
+    }
+  });
+
+  // ─── New game ─────────────────────────────────────────────────
+  document.getElementById('btn-new-game').addEventListener('click', async () => {
+    if (!confirm('Bắt đầu game mới với cùng phòng?')) return;
+    try {
+      await GameModule.startGame(state.roomId, state.adminId);
+    } catch (e) {
+      UIModule.showToast(e.message, 'danger');
+    }
+  });
+
+  // ─── Firebase listener ────────────────────────────────────────
+  function startListening() {
+    if (state.unsubscribe) state.unsubscribe();
+    state.unsubscribe = GameModule.subscribeToRoom(state.roomId, onRoomUpdate);
+  }
+
+  let lastFlip7Winner = null;
+
+  function onRoomUpdate(data) {
+    state.roomData = data;
+
+    if (data.flip7Winner && data.flip7Winner !== lastFlip7Winner) {
+      lastFlip7Winner = data.flip7Winner;
+      const winner = data.players[data.flip7Winner];
+      if (winner) UIModule.showFlip7Banner(winner.name);
+    }
+
+    if (data.gameStatus === 'waiting') {
+      renderLobby(data);
+    } else if (data.gameStatus === 'playing') {
+      renderGameView(data);
+    } else if (data.gameStatus === 'finished') {
+      renderWinner(data);
+    }
+  }
+
+  function renderLobby(data) {
+    showScreen('screen-admin-lobby');
+    document.getElementById('admin-room-code').textContent = state.roomId;
+
+    const players = data.players || {};
+    const playerIds = data.playerOrder || Object.keys(players);
+    const count = playerIds.length;
+
+    document.getElementById('admin-player-count').textContent = `${count}/15`;
+
+    const listEl = document.getElementById('admin-player-list');
+    listEl.innerHTML = playerIds.map(pid => {
+      const p = players[pid];
+      return `<div class="player-row" style="margin-bottom:8px; display:flex; align-items:center; gap:10px;">
+        <span>${p.isAdmin ? '👑' : '👤'}</span>
+        <span style="flex:1; font-weight:700;">${UIModule.escapeHtml(p.name)}</span>
+        ${p.isAdmin ? '<span style="font-size:0.75rem;color:var(--gold);">Admin</span>' : ''}
+      </div>`;
+    }).join('');
+
+    const canStart = count >= 2;
+    document.getElementById('btn-start').disabled = !canStart;
+    document.getElementById('admin-waiting-msg').style.display = canStart ? 'none' : 'block';
+    document.getElementById('start-hint').style.display = canStart ? 'none' : 'block';
+  }
+
+  function renderGameView(data) {
+    showScreen('screen-admin-game');
+
+    document.getElementById('admin-name-display').textContent = state.adminName || 'Admin';
+    document.getElementById('admin-room-display').textContent = state.roomId;
+    document.getElementById('admin-round').textContent = data.round || 1;
+
+    // Current player
+    const cp = data.currentPlayer ? data.players[data.currentPlayer] : null;
+    document.getElementById('current-turn-display').textContent = cp ? `${cp.name}` : '—';
+
+    const statusEl = document.getElementById('admin-turn-status');
+    if (data.roundStatus === 'endingRound') {
+      statusEl.textContent = '🎉 Vòng đang kết thúc...';
+      statusEl.className = 'turn-indicator other-turn';
+    } else {
+      statusEl.textContent = cp ? `${cp.name} đang quyết định...` : 'Đang chờ...';
+      statusEl.className = 'turn-indicator';
+    }
+
+    // Deck count
+    document.getElementById('deck-count').textContent = (data.deck || []).length;
+
+    // Players sorted by score
+    const playerIds = data.playerOrder || Object.keys(data.players);
+    const sorted = [...playerIds].sort((a, b) =>
+      (data.players[b].totalScore || 0) - (data.players[a].totalScore || 0)
+    );
+
+    const el = document.getElementById('admin-game-players');
+    el.innerHTML = sorted.map(pid =>
+      UIModule.renderPlayerRow(pid, data.players[pid], data.currentPlayer, pid === state.adminId)
+    ).join('');
+  }
+
+  function renderWinner(data) {
+    showScreen('screen-admin-winner');
+    const winner = data.players[data.winner];
+
+    document.getElementById('admin-winner-content').innerHTML = `
+      <div class="winner-trophy">🏆</div>
+      <div class="winner-title">CHIẾN THẮNG!</div>
+      <div class="winner-name">${UIModule.escapeHtml(winner?.name || '???')}</div>
+      <div class="winner-score">${winner?.totalScore || 0} điểm</div>
+    `;
+
+    const playerIds = data.playerOrder || Object.keys(data.players);
+    const sorted = [...playerIds].sort((a, b) =>
+      (data.players[b].totalScore || 0) - (data.players[a].totalScore || 0)
+    );
+
+    document.getElementById('admin-final-scores').innerHTML = sorted.map((pid, i) => {
+      const p = data.players[pid];
+      const medals = ['🥇','🥈','🥉'];
+      return `<div class="player-row">
+        <div class="player-row-header">
+          <span>${medals[i] || (i+1)+'.'}</span>
+          <span class="player-name">${UIModule.escapeHtml(p.name)}</span>
+          <span class="player-score-total">${p.totalScore || 0} điểm</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ─── Auto-reconnect ────────────────────────────────────────────
+  window.addEventListener('load', () => {
+    const sess = loadAdminSession();
+    if (sess && sess.roomId && sess.adminId) {
+      state.roomId = sess.roomId;
+      state.adminId = sess.adminId;
+      state.adminName = sess.adminName;
+      document.getElementById('admin-name').value = sess.adminName || '';
+
+      db.collection('rooms').doc(sess.roomId).get().then(snap => {
+        if (snap.exists) startListening();
+      }).catch(() => {});
+    }
+  });
+</script>
+</body>
+</html>

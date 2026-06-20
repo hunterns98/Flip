@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flip 7 – Chơi Online</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<div class="page" id="app">
+
+  <!-- ── LOBBY ─────────────────────────────────────────────── -->
+  <section id="screen-lobby">
+    <div class="game-logo">
+      <h1>FLIP 7</h1>
+      <div class="tagline">Online Multiplayer Card Game</div>
+    </div>
+
+    <div class="join-section">
+      <div class="panel">
+        <div class="panel-title">Tham gia phòng</div>
+
+        <div class="form-group">
+          <label>Tên của bạn</label>
+          <input type="text" id="input-name" placeholder="Nhập tên..." maxlength="20" autocomplete="off">
+        </div>
+
+        <div class="form-group">
+          <label>Mã phòng</label>
+          <input type="text" id="input-room" placeholder="VD: ABC123" maxlength="6"
+                 style="text-transform:uppercase; letter-spacing:0.2em; font-size:1.2rem;">
+        </div>
+
+        <div id="join-error" class="error-msg" style="display:none"></div>
+
+        <button class="btn btn-primary" id="btn-join">🎮 Vào Phòng</button>
+
+        <div style="margin-top:20px; text-align:center;">
+          <a href="admin.html" class="btn btn-ghost btn-sm">🛠 Tạo phòng mới (Admin)</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── WAITING ROOM ──────────────────────────────────────── -->
+  <section id="screen-waiting" style="display:none">
+    <div class="game-logo">
+      <h1>FLIP 7</h1>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Phòng chơi</div>
+      <div class="room-code" id="display-room-code" title="Nhấn để sao chép">------</div>
+      <div class="room-code-label">Mã phòng – chia sẻ cho bạn bè</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Người chơi <span class="player-count" id="player-count-badge">0/15</span></div>
+      <div id="waiting-player-list"></div>
+      <div class="info-msg waiting-dots" id="waiting-msg">Đợi admin bắt đầu</div>
+    </div>
+  </section>
+
+  <!-- ── GAME SCREEN ───────────────────────────────────────── -->
+  <section id="screen-game" style="display:none">
+
+    <!-- Header info -->
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0 8px;">
+      <div>
+        <div class="player-name-display" id="my-name-display">—</div>
+        <div style="font-size:0.75rem; color:var(--text-dim);" id="room-display">Phòng: —</div>
+      </div>
+      <div class="round-label">Vòng <span id="round-display">1</span></div>
+    </div>
+
+    <!-- Score display -->
+    <div class="panel" style="padding:16px;">
+      <div class="score-display">
+        <div class="score-item">
+          <div class="score-val" id="my-total-score">0</div>
+          <div class="score-lbl">Tổng điểm</div>
+        </div>
+        <div class="score-item">
+          <div class="score-val" id="my-round-score">0</div>
+          <div class="score-lbl">Điểm vòng này</div>
+        </div>
+        <div class="score-item">
+          <div class="score-val" style="font-size:1.2rem;color:var(--text-dim);">200</div>
+          <div class="score-lbl">Mục tiêu</div>
+        </div>
+      </div>
+      <div class="score-bar-wrap" style="margin-top:12px;">
+        <div class="score-bar-track">
+          <div class="score-bar-fill" id="score-bar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Turn indicator -->
+    <div class="turn-indicator" id="turn-indicator">Đợi lượt...</div>
+
+    <!-- Cards in round -->
+    <div class="panel">
+      <div class="panel-title">Lá bài của bạn</div>
+      <div class="cards-row" id="my-cards-row">
+        <span class="no-cards">Chưa có lá nào</span>
+      </div>
+    </div>
+
+    <!-- Drawn card -->
+    <div class="panel" style="padding:12px;">
+      <div class="panel-title">Lá vừa rút</div>
+      <div id="drawn-card-area">
+        <span class="no-cards">Chưa rút lá nào</span>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="btn-row" id="action-buttons">
+      <button class="btn btn-danger" id="btn-flip" disabled>🃏 Rút Bài</button>
+      <button class="btn btn-success" id="btn-stop" disabled>✋ Dừng</button>
+    </div>
+
+    <!-- All players -->
+    <div class="panel" style="margin-top:20px;">
+      <div class="panel-title">Tất cả người chơi</div>
+      <div id="all-players-list"></div>
+    </div>
+
+  </section>
+
+  <!-- ── STATUS SCREEN (bust/stopped) ─────────────────────── -->
+  <section id="screen-status" style="display:none">
+    <div class="panel" style="margin-top:40px;">
+      <div class="status-overlay" id="status-content"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Bảng xếp hạng vòng này</div>
+      <div id="status-player-list"></div>
+    </div>
+  </section>
+
+  <!-- ── WINNER SCREEN ─────────────────────────────────────── -->
+  <section id="screen-winner" style="display:none">
+    <div class="panel" style="margin-top:40px;">
+      <div class="winner-screen" id="winner-content"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Điểm cuối cùng</div>
+      <div id="final-scores"></div>
+    </div>
+    <button class="btn btn-ghost" style="width:100%;margin-top:12px;" onclick="location.href='index.html'">
+      🏠 Về trang chủ
+    </button>
+  </section>
+
+</div><!-- /app -->
+
+<!-- Scripts -->
+<script src="firebase.js"></script>
+<script src="deck.js"></script>
+<script src="game.js"></script>
+<script src="ui.js"></script>
+<script>
+  // ─── State ─────────────────────────────────────────────────
+  const state = {
+    roomId: null,
+    playerId: null,
+    playerName: null,
+    roomData: null,
+    unsubscribe: null,
+    pendingFreezeCard: false,
+  };
+
+  // ─── Session persistence ────────────────────────────────────
+  function saveSession() {
+    sessionStorage.setItem('flip7_session', JSON.stringify({
+      roomId: state.roomId,
+      playerId: state.playerId,
+      playerName: state.playerName,
+    }));
+  }
+
+  function loadSession() {
+    try {
+      return JSON.parse(sessionStorage.getItem('flip7_session'));
+    } catch { return null; }
+  }
+
+  // ─── Screens ────────────────────────────────────────────────
+  function showScreen(id) {
+    ['screen-lobby','screen-waiting','screen-game','screen-status','screen-winner']
+      .forEach(s => document.getElementById(s).style.display = 'none');
+    document.getElementById(id).style.display = 'block';
+  }
+
+  // ─── Join flow ──────────────────────────────────────────────
+  document.getElementById('btn-join').addEventListener('click', async () => {
+    const name = document.getElementById('input-name').value.trim();
+    const room = document.getElementById('input-room').value.trim().toUpperCase();
+    const errEl = document.getElementById('join-error');
+    errEl.style.display = 'none';
+
+    if (!name) { showError(errEl, 'Vui lòng nhập tên!'); return; }
+    if (room.length !== 6) { showError(errEl, 'Mã phòng phải có 6 ký tự!'); return; }
+
+    UIModule.setLoading('btn-join', true);
+    try {
+      const { roomId, playerId } = await GameModule.joinRoom(room, name);
+      state.roomId = roomId;
+      state.playerId = playerId;
+      state.playerName = name;
+      saveSession();
+      startListening();
+    } catch (e) {
+      showError(errEl, e.message);
+    } finally {
+      UIModule.setLoading('btn-join', false);
+    }
+  });
+
+  function showError(el, msg) {
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  // ─── Room code copy ─────────────────────────────────────────
+  document.getElementById('display-room-code').addEventListener('click', () => {
+    const code = state.roomId;
+    if (!code) return;
+    navigator.clipboard.writeText(code).then(() => UIModule.showToast('Đã sao chép mã phòng!', 'success', 2000));
+  });
+
+  // ─── Listen to Firebase ─────────────────────────────────────
+  function startListening() {
+    if (state.unsubscribe) state.unsubscribe();
+    state.unsubscribe = GameModule.subscribeToRoom(state.roomId, onRoomUpdate);
+  }
+
+  let lastRoundStatus = null;
+  let lastFlip7Winner = null;
+
+  function onRoomUpdate(data) {
+    state.roomData = data;
+
+    // Flip7 banner
+    if (data.flip7Winner && data.flip7Winner !== lastFlip7Winner) {
+      lastFlip7Winner = data.flip7Winner;
+      const winner = data.players[data.flip7Winner];
+      if (winner) UIModule.showFlip7Banner(winner.name);
+    }
+    lastRoundStatus = data.roundStatus;
+
+    if (data.gameStatus === 'waiting') {
+      renderWaiting(data);
+    } else if (data.gameStatus === 'playing') {
+      renderGame(data);
+    } else if (data.gameStatus === 'finished') {
+      renderWinner(data);
+    }
+  }
+
+  // ─── Waiting screen ─────────────────────────────────────────
+  function renderWaiting(data) {
+    showScreen('screen-waiting');
+    document.getElementById('display-room-code').textContent = state.roomId;
+
+    const players = data.players || {};
+    const playerIds = data.playerOrder || Object.keys(players);
+
+    document.getElementById('player-count-badge').textContent = `${playerIds.length}/15`;
+
+    const listEl = document.getElementById('waiting-player-list');
+    listEl.innerHTML = playerIds.map(pid => {
+      const p = players[pid];
+      return `<div class="player-row" style="margin-bottom:8px;">
+        <span>${p.isAdmin ? '👑' : '👤'} ${UIModule.escapeHtml(p.name)}</span>
+        ${p.isAdmin ? '<span style="font-size:0.75rem;color:var(--gold);margin-left:8px;">Admin</span>' : ''}
+      </div>`;
+    }).join('');
+  }
+
+  // ─── Game screen ─────────────────────────────────────────────
+  function renderGame(data) {
+    const player = data.players[state.playerId];
+    if (!player) return;
+
+    const isMyTurn = data.currentPlayer === state.playerId;
+    const myStatus = player.status;
+
+    // If bust or stopped mid-round, show status screen
+    if (myStatus !== 'playing' && data.roundStatus === 'playing') {
+      renderStatusScreen(data, player);
+      return;
+    }
+
+    showScreen('screen-game');
+
+    // Header
+    document.getElementById('my-name-display').textContent = state.playerName;
+    document.getElementById('room-display').textContent = `Phòng: ${state.roomId}`;
+    document.getElementById('round-display').textContent = data.round || 1;
+
+    // Scores
+    const myTotal = player.totalScore || 0;
+    const myRound = player.roundScore || 0;
+    document.getElementById('my-total-score').textContent = myTotal;
+    document.getElementById('my-round-score').textContent = myRound;
+    document.getElementById('score-bar').style.width = Math.min((myTotal / 200) * 100, 100) + '%';
+
+    // Turn indicator
+    const turnEl = document.getElementById('turn-indicator');
+    if (data.roundStatus === 'endingRound') {
+      turnEl.textContent = '🎉 Vòng kết thúc! Chuẩn bị vòng mới...';
+      turnEl.className = 'turn-indicator other-turn';
+    } else if (isMyTurn && myStatus === 'playing') {
+      turnEl.textContent = '⚡ Đến lượt bạn!';
+      turnEl.className = 'turn-indicator my-turn';
+    } else {
+      const cp = data.players[data.currentPlayer];
+      turnEl.textContent = cp ? `Đợi ${cp.name} đi...` : 'Đang chờ...';
+      turnEl.className = 'turn-indicator other-turn';
+    }
+
+    // My cards
+    const cardsEl = document.getElementById('my-cards-row');
+    cardsEl.innerHTML = UIModule.renderCardList(player.cardsInRound);
+
+    // Buttons
+    const canAct = isMyTurn && myStatus === 'playing' && data.roundStatus === 'playing' && !state.pendingFreezeCard;
+    document.getElementById('btn-flip').disabled = !canAct;
+    document.getElementById('btn-stop').disabled = !canAct;
+
+    // All players
+    const playerIds = data.playerOrder || Object.keys(data.players);
+    const allEl = document.getElementById('all-players-list');
+    allEl.innerHTML = playerIds.map(pid =>
+      UIModule.renderPlayerRow(pid, data.players[pid], data.currentPlayer, pid === state.playerId)
+    ).join('');
+  }
+
+  function renderStatusScreen(data, player) {
+    showScreen('screen-status');
+    const statusEl = document.getElementById('status-content');
+
+    if (player.status === 'bust') {
+      statusEl.innerHTML = `
+        <div class="big-icon">💥</div>
+        <h2>BUST!</h2>
+        <p>Bạn đã rút lá trùng — điểm vòng này bằng 0.</p>
+        <p style="margin-top:12px;">Đợi những người còn lại hoàn thành lượt...</p>
+      `;
+    } else {
+      statusEl.innerHTML = `
+        <div class="big-icon">✋</div>
+        <h2>Đã dừng</h2>
+        <p>Bạn đã lưu <strong>${player.totalScore}</strong> điểm tổng.</p>
+        <p style="margin-top:12px;">Đợi vòng mới...</p>
+      `;
+    }
+
+    // Show all players
+    const playerIds = data.playerOrder || Object.keys(data.players);
+    const listEl = document.getElementById('status-player-list');
+    listEl.innerHTML = playerIds.map(pid =>
+      UIModule.renderPlayerRow(pid, data.players[pid], data.currentPlayer, pid === state.playerId)
+    ).join('');
+  }
+
+  // ─── Winner screen ────────────────────────────────────────────
+  function renderWinner(data) {
+    showScreen('screen-winner');
+    const winner = data.players[data.winner];
+
+    document.getElementById('winner-content').innerHTML = `
+      <div class="winner-trophy">🏆</div>
+      <div class="winner-title">CHIẾN THẮNG!</div>
+      <div class="winner-name">${UIModule.escapeHtml(winner?.name || '???')}</div>
+      <div class="winner-score">${winner?.totalScore || 0} điểm</div>
+    `;
+
+    const playerIds = data.playerOrder || Object.keys(data.players);
+    const sorted = [...playerIds].sort((a, b) =>
+      (data.players[b].totalScore || 0) - (data.players[a].totalScore || 0)
+    );
+
+    document.getElementById('final-scores').innerHTML = sorted.map((pid, i) => {
+      const p = data.players[pid];
+      const medals = ['🥇', '🥈', '🥉'];
+      return `
+        <div class="player-row ${pid === state.playerId ? 'me' : ''}">
+          <div class="player-row-header">
+            <span>${medals[i] || (i + 1) + '.'}</span>
+            <span class="player-name">${UIModule.escapeHtml(p.name)}</span>
+            <span class="player-score-total">${p.totalScore || 0} điểm</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ─── Game actions ─────────────────────────────────────────────
+  document.getElementById('btn-flip').addEventListener('click', async () => {
+    if (!state.roomId || !state.playerId) return;
+    document.getElementById('btn-flip').disabled = true;
+    document.getElementById('btn-stop').disabled = true;
+
+    try {
+      const result = await GameModule.flipCard(state.roomId, state.playerId);
+
+      if (result.drawnCard) {
+        UIModule.showCardDrawn(result.drawnCard, result);
+      }
+
+      if (result.requireFreezeTarget) {
+        state.pendingFreezeCard = true;
+        UIModule.showFreezeSelector(
+          state.roomData.players,
+          state.playerId,
+          async (targetId) => {
+            state.pendingFreezeCard = false;
+            try {
+              await GameModule.applyFreeze(state.roomId, state.playerId, targetId);
+              UIModule.showToast('❄️ Đã đóng băng người chơi!', 'info');
+            } catch (e) {
+              UIModule.showToast(e.message, 'danger');
+            }
+          }
+        );
+      }
+
+      if (result.drawnCards) {
+        // Flip3 - show last drawn card
+        const last = result.drawnCards[result.drawnCards.length - 1];
+        if (last) UIModule.showCardDrawn(last, result);
+      }
+
+    } catch (e) {
+      UIModule.showToast(e.message, 'danger');
+      // Re-enable if still my turn
+      if (state.roomData?.currentPlayer === state.playerId) {
+        document.getElementById('btn-flip').disabled = false;
+        document.getElementById('btn-stop').disabled = false;
+      }
+    }
+  });
+
+  document.getElementById('btn-stop').addEventListener('click', async () => {
+    if (!state.roomId || !state.playerId) return;
+    document.getElementById('btn-flip').disabled = true;
+    document.getElementById('btn-stop').disabled = true;
+
+    try {
+      const result = await GameModule.stopTurn(state.roomId, state.playerId);
+      UIModule.showToast(`✋ Đã dừng! Lưu ${result.total} điểm tổng.`, 'success');
+    } catch (e) {
+      UIModule.showToast(e.message, 'danger');
+    }
+  });
+
+  // ─── Auto-reconnect ────────────────────────────────────────────
+  window.addEventListener('load', () => {
+    const sess = loadSession();
+    if (sess && sess.roomId && sess.playerId) {
+      state.roomId = sess.roomId;
+      state.playerId = sess.playerId;
+      state.playerName = sess.playerName;
+
+      // Pre-fill form
+      document.getElementById('input-name').value = sess.playerName || '';
+      document.getElementById('input-room').value = sess.roomId || '';
+
+      // Try to reconnect
+      db.collection('rooms').doc(sess.roomId).get().then(snap => {
+        if (snap.exists) {
+          startListening();
+        }
+      }).catch(() => {});
+    }
+  });
+</script>
+</body>
+</html>

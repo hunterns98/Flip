@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Rooms: anyone can read, anyone can create/update
+    // In production, add authentication for stricter rules
+    match /rooms/{roomId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAll(['gameStatus', 'adminId', 'players']);
+      allow update: if true; // Allow all updates (add auth checks in production)
+    }
+  }
+}
