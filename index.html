@@ -16,27 +16,21 @@
       <h1>FLIP 7</h1>
       <div class="tagline">Online Multiplayer Card Game</div>
     </div>
-
     <div class="join-section">
       <div class="panel">
         <div class="panel-title">Tham gia phòng</div>
-
         <div class="form-group">
           <label>Tên của bạn</label>
           <input type="text" id="input-name" placeholder="Nhập tên..." maxlength="20" autocomplete="off">
         </div>
-
         <div class="form-group">
           <label>Mã phòng</label>
           <input type="text" id="input-room" placeholder="VD: ABC123" maxlength="6"
-                 style="text-transform:uppercase; letter-spacing:0.2em; font-size:1.2rem;">
+            style="text-transform:uppercase;letter-spacing:0.2em;font-size:1.2rem;">
         </div>
-
         <div id="join-error" class="error-msg" style="display:none"></div>
-
         <button class="btn btn-primary" id="btn-join">🎮 Vào Phòng</button>
-
-        <div style="margin-top:20px; text-align:center;">
+        <div style="margin-top:20px;text-align:center;">
           <a href="admin.html" class="btn btn-ghost btn-sm">🛠 Tạo phòng mới (Admin)</a>
         </div>
       </div>
@@ -45,16 +39,12 @@
 
   <!-- ── WAITING ROOM ──────────────────────────────────────── -->
   <section id="screen-waiting" style="display:none">
-    <div class="game-logo">
-      <h1>FLIP 7</h1>
-    </div>
-
+    <div class="game-logo"><h1>FLIP 7</h1></div>
     <div class="panel">
       <div class="panel-title">Phòng chơi</div>
       <div class="room-code" id="display-room-code" title="Nhấn để sao chép">------</div>
       <div class="room-code-label">Mã phòng – chia sẻ cho bạn bè</div>
     </div>
-
     <div class="panel">
       <div class="panel-title">Người chơi <span class="player-count" id="player-count-badge">0/15</span></div>
       <div id="waiting-player-list"></div>
@@ -64,17 +54,14 @@
 
   <!-- ── GAME SCREEN ───────────────────────────────────────── -->
   <section id="screen-game" style="display:none">
-
-    <!-- Header info -->
-    <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0 8px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0 8px;">
       <div>
         <div class="player-name-display" id="my-name-display">—</div>
-        <div style="font-size:0.75rem; color:var(--text-dim);" id="room-display">Phòng: —</div>
+        <div style="font-size:0.75rem;color:var(--text-dim);" id="room-display">Phòng: —</div>
       </div>
       <div class="round-label">Vòng <span id="round-display">1</span></div>
     </div>
 
-    <!-- Score display -->
     <div class="panel" style="padding:16px;">
       <div class="score-display">
         <div class="score-item">
@@ -97,40 +84,30 @@
       </div>
     </div>
 
-    <!-- Turn indicator -->
     <div class="turn-indicator" id="turn-indicator">Đợi lượt...</div>
 
-    <!-- Cards in round -->
     <div class="panel">
       <div class="panel-title">Lá bài của bạn</div>
-      <div class="cards-row" id="my-cards-row">
-        <span class="no-cards">Chưa có lá nào</span>
-      </div>
+      <div class="cards-row" id="my-cards-row"><span class="no-cards">Chưa có lá nào</span></div>
     </div>
 
-    <!-- Drawn card -->
     <div class="panel" style="padding:12px;">
       <div class="panel-title">Lá vừa rút</div>
-      <div id="drawn-card-area">
-        <span class="no-cards">Chưa rút lá nào</span>
-      </div>
+      <div id="drawn-card-area"><span class="no-cards">Chưa rút lá nào</span></div>
     </div>
 
-    <!-- Action buttons -->
     <div class="btn-row" id="action-buttons">
       <button class="btn btn-danger" id="btn-flip" disabled>🃏 Rút Bài</button>
       <button class="btn btn-success" id="btn-stop" disabled>✋ Dừng</button>
     </div>
 
-    <!-- All players -->
     <div class="panel" style="margin-top:20px;">
       <div class="panel-title">Tất cả người chơi</div>
       <div id="all-players-list"></div>
     </div>
-
   </section>
 
-  <!-- ── STATUS SCREEN (bust/stopped) ─────────────────────── -->
+  <!-- ── STATUS SCREEN (bust / stopped) ───────────────────── -->
   <section id="screen-status" style="display:none">
     <div class="panel" style="margin-top:40px;">
       <div class="status-overlay" id="status-content"></div>
@@ -150,341 +127,721 @@
       <div class="panel-title">Điểm cuối cùng</div>
       <div id="final-scores"></div>
     </div>
-    <button class="btn btn-ghost" style="width:100%;margin-top:12px;" onclick="location.href='index.html'">
+    <button class="btn btn-ghost" style="width:100%;margin-top:12px;"
+      onclick="sessionStorage.removeItem('f7player');location.href='index.html'">
       🏠 Về trang chủ
     </button>
   </section>
 
 </div><!-- /app -->
 
-<!-- ✅ Scripts theo đúng thứ tự phụ thuộc, tất cả ở cuối body -->
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="firebase.js"></script>
-<script src="deck.js"></script>
-<script src="game.js"></script>
-<script src="ui.js"></script>
+
 <script>
-window.addEventListener('DOMContentLoaded', function () {
+// ═══════════════════════════════════════════════════════════════
+// BƯỚC 1: Điền Firebase config của bạn vào đây
+// Lấy tại: Firebase Console > Project Settings > Your apps > Web
+// ═══════════════════════════════════════════════════════════════
+var FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAjbj519mJnX18lcMavPTgkAC-OQ4L5dsY",
+  authDomain: "flip-45e37.firebaseapp.com",
+  projectId: "flip-45e37",
+  storageBucket: "flip-45e37.firebasestorage.app",
+  messagingSenderId: "774430389314",
+  appId: "1:774430389314:web:114bd49e5794b3dcb329db",
+  measurementId: "G-JT42H3S38R"
+};
+// ═══════════════════════════════════════════════════════════════
 
-  // ─── State ─────────────────────────────────────────────────
-  const state = {
-    roomId: null,
-    playerId: null,
-    playerName: null,
-    roomData: null,
-    unsubscribe: null,
-    pendingFreezeCard: false,
-  };
+// ── Special card constants ─────────────────────────────────────
+var SC = {
+  FREEZE:'freeze', SECOND_CHANCE:'second_chance', FLIP3:'flip3',
+  DOUBLE:'double', PLUS2:'+2', PLUS4:'+4', PLUS6:'+6', PLUS8:'+8', PLUS10:'+10'
+};
+var PLUS_CARDS = [SC.PLUS2,SC.PLUS4,SC.PLUS6,SC.PLUS8,SC.PLUS10];
+var TARGET = 200, FLIP7_BONUS = 15;
 
-  // ─── Session persistence ────────────────────────────────────
-  function saveSession() {
-    sessionStorage.setItem('flip7_session', JSON.stringify({
-      roomId: state.roomId,
-      playerId: state.playerId,
-      playerName: state.playerName,
-    }));
+// ── Deck helpers ───────────────────────────────────────────────
+function createDeck() {
+  var deck = [];
+  for (var n = 0; n <= 12; n++) {
+    var cnt = n === 0 ? 1 : n;
+    for (var i = 0; i < cnt; i++) deck.push({type:'number', value:n});
   }
-
-  function loadSession() {
-    try {
-      return JSON.parse(sessionStorage.getItem('flip7_session'));
-    } catch { return null; }
+  [[SC.FREEZE,'Freeze'],[SC.SECOND_CHANCE,'Second Chance'],[SC.FLIP3,'Flip 3']]
+    .forEach(function(s){ for(var i=0;i<3;i++) deck.push({type:'special',value:s[0],label:s[1]}); });
+  [[SC.DOUBLE,'Double'],[SC.PLUS2,'+2'],[SC.PLUS4,'+4'],
+   [SC.PLUS6,'+6'],[SC.PLUS8,'+8'],[SC.PLUS10,'+10']]
+    .forEach(function(s){ deck.push({type:'special',value:s[0],label:s[1]}); });
+  for (var i = deck.length-1; i > 0; i--) {
+    var j = Math.floor(Math.random()*(i+1));
+    var t = deck[i]; deck[i] = deck[j]; deck[j] = t;
   }
+  return deck;
+}
+function mkDeck(){ return createDeck().map(function(c){return JSON.stringify(c);}); }
+function s2c(s){ return JSON.parse(s); }
+function c2s(c){ return JSON.stringify(c); }
 
-  // ─── Screens ────────────────────────────────────────────────
-  function showScreen(id) {
-    ['screen-lobby','screen-waiting','screen-game','screen-status','screen-winner']
-      .forEach(s => document.getElementById(s).style.display = 'none');
-    document.getElementById(id).style.display = 'block';
-  }
-
-  // ─── Join flow ──────────────────────────────────────────────
-  document.getElementById('btn-join').addEventListener('click', async () => {
-    const name = document.getElementById('input-name').value.trim();
-    const room = document.getElementById('input-room').value.trim().toUpperCase();
-    const errEl = document.getElementById('join-error');
-    errEl.style.display = 'none';
-
-    if (!name) { showError(errEl, 'Vui lòng nhập tên!'); return; }
-    if (room.length !== 6) { showError(errEl, 'Mã phòng phải có 6 ký tự!'); return; }
-
-    UIModule.setLoading('btn-join', true);
-    try {
-      const { roomId, playerId } = await GameModule.joinRoom(room, name);
-      state.roomId = roomId;
-      state.playerId = playerId;
-      state.playerName = name;
-      saveSession();
-      startListening();
-    } catch (e) {
-      showError(errEl, e.message);
-    } finally {
-      UIModule.setLoading('btn-join', false);
-    }
+function calcScore(cards) {
+  var num=0, mult=1, bonus=0;
+  cards.forEach(function(c){
+    if(c.type==='number') num+=c.value;
+    else if(c.value===SC.DOUBLE) mult*=2;
+    else if(PLUS_CARDS.indexOf(c.value)>=0) bonus+=parseInt(c.value);
   });
+  return (num*mult)+bonus;
+}
+function isFlip7(cards){
+  var nums=cards.filter(function(c){return c.type==='number';});
+  return (new Set(nums.map(function(c){return c.value;}))).size>=7;
+}
+function hasNum(cards,v){ return cards.some(function(c){return c.type==='number'&&c.value===v;}); }
+function hasSC(cards){ return cards.some(function(c){return c.type==='special'&&c.value===SC.SECOND_CHANCE;}); }
+function removeSC(cards){
+  var idx=cards.findIndex(function(c){return c.type==='special'&&c.value===SC.SECOND_CHANCE;});
+  if(idx<0) return cards; var a=cards.slice(); a.splice(idx,1); return a;
+}
 
-  function showError(el, msg) {
-    el.textContent = msg;
-    el.style.display = 'block';
+// ── UI helpers ─────────────────────────────────────────────────
+function escHtml(s){ var d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+function $(id){ return document.getElementById(id); }
+
+function cardColor(card) {
+  if(card.type==='number') return 'hsl('+(card.value*27+10)%360+',70%,52%)';
+  var m={freeze:'#4fc3f7',second_chance:'#81c784',flip3:'#ff8a65',
+         double:'#ffd54f','+2':'#ce93d8','+4':'#ce93d8',
+         '+6':'#ce93d8','+8':'#ce93d8','+10':'#ce93d8'};
+  return m[card.value]||'#aaa';
+}
+function cardHtml(raw, big) {
+  var c=s2c(raw), bg=cardColor(c), lbl=c.type==='number'?c.value:(c.label||c.value);
+  return '<div class="'+(big?'card':'card-mini')+'" style="background:'+bg+'">'+lbl+'</div>';
+}
+function cardsHtml(arr) {
+  if(!arr||!arr.length) return '<span class="no-cards">Chưa có lá nào</span>';
+  return arr.map(function(r){return cardHtml(r,false);}).join('');
+}
+function statusIcon(s){ return s==='playing'?'🟢':s==='stopped'?'🔵':s==='bust'?'💥':'⚫'; }
+
+function showScreen(id) {
+  ['screen-lobby','screen-waiting','screen-game','screen-status','screen-winner']
+    .forEach(function(s){ $(s).style.display='none'; });
+  $(id).style.display='block';
+}
+
+function showToast(msg, type, dur) {
+  var c=$('toast-container');
+  if(!c){ c=document.createElement('div');c.id='toast-container';document.body.appendChild(c); }
+  var t=document.createElement('div'); t.className='toast toast-'+(type||'info');
+  t.textContent=msg; c.appendChild(t);
+  setTimeout(function(){t.classList.add('fade-out');setTimeout(function(){t.remove();},500);},dur||3000);
+}
+
+function showFlip7Banner(name) {
+  var b=document.createElement('div'); b.className='flip7-banner';
+  b.innerHTML='<div class="flip7-content"><div class="flip7-icon">🃏</div>'+
+    '<div class="flip7-title">FLIP 7!</div>'+
+    '<div class="flip7-sub">'+escHtml(name)+' đã lật 7 lá khác nhau!</div>'+
+    '<div class="flip7-bonus">+15 điểm thưởng</div></div>';
+  document.body.appendChild(b);
+  setTimeout(function(){b.classList.add('fade-out');setTimeout(function(){b.remove();},600);},4000);
+}
+
+function showPopup(html) {
+  var o=$('popup-overlay');
+  if(!o){ o=document.createElement('div');o.id='popup-overlay';document.body.appendChild(o); }
+  o.innerHTML='<div class="popup-box">'+html+'</div>';
+  o.style.display='flex';
+}
+function hidePopup(){ var o=$('popup-overlay');if(o)o.style.display='none'; }
+
+function renderPlayerRow(pid, p, currentPlayer, isMe) {
+  var isCur = pid===currentPlayer;
+  return '<div class="player-row'+(isCur?' active-player':'')+(isMe?' me':'')+'">'+
+    '<div class="player-row-header">'+
+    '<span class="player-status-icon">'+statusIcon(p.status)+'</span>'+
+    '<span class="player-name">'+escHtml(p.name)+(isMe?' (Bạn)':'')+'</span>'+
+    (isCur?'<span class="turn-badge">Đang đi</span>':'')+
+    '<span class="player-score-total">'+(p.totalScore||0)+' điểm</span>'+
+    '</div>'+
+    '<div class="player-cards">'+cardsHtml(p.cardsInRound)+'</div>'+
+    (p.roundScore>0?'<div class="round-score-badge">+'+p.roundScore+' vòng này</div>':'')+
+    '</div>';
+}
+
+// ── Firebase init ──────────────────────────────────────────────
+var db = null;
+var configOK = !Object.values(FIREBASE_CONFIG).some(function(v){ return v.indexOf('YOUR_')>=0; });
+
+if (!configOK) {
+  document.getElementById('app').innerHTML =
+    '<div style="font-family:monospace;background:#1e3d2e;border:1px solid #f5c842;border-radius:12px;padding:32px;max-width:520px;margin:40px auto;">'+
+    '<div style="font-size:2rem;margin-bottom:8px;">🔧 Cần cấu hình Firebase</div>'+
+    '<p style="color:#a8c4b4;margin-bottom:16px;">Mở file <code>index.html</code> và <code>admin.html</code>, tìm biến <code>FIREBASE_CONFIG</code> và điền thông tin Firebase project vào.</p>'+
+    '<div style="background:#0f2218;border-radius:8px;padding:16px;">'+
+    '<b style="color:#f5c842;">Lấy config tại:</b><br><br>'+
+    '<a href="https://console.firebase.google.com" target="_blank" style="color:#4a9eed;">console.firebase.google.com</a><br>'+
+    '→ Project Settings ⚙️ → Your apps → &lt;/&gt; Web → firebaseConfig</div></div>';
+} else {
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+    db.enablePersistence({synchronizeTabs:true}).catch(function(){});
+  } catch(e) {
+    console.error('Firebase init error:', e);
   }
+}
 
-  // ─── Room code copy ─────────────────────────────────────────
-  document.getElementById('display-room-code').addEventListener('click', () => {
-    const code = state.roomId;
-    if (!code) return;
-    navigator.clipboard.writeText(code).then(() => UIModule.showToast('Đã sao chép mã phòng!', 'success', 2000));
+// ── Game state ─────────────────────────────────────────────────
+var G = {
+  roomId:null, playerId:null, playerName:null,
+  roomData:null, unsub:null,
+  lastFlip7:null, pendingFreeze:false
+};
+
+function saveSession(){
+  sessionStorage.setItem('f7player', JSON.stringify(
+    {roomId:G.roomId,playerId:G.playerId,playerName:G.playerName}));
+}
+function loadSession(){ try{return JSON.parse(sessionStorage.getItem('f7player'));}catch(e){return null;} }
+
+// ── Join room ──────────────────────────────────────────────────
+async function joinRoom(roomId, playerName) {
+  if(!db) throw new Error('Firebase chưa được cấu hình!');
+  var ref = db.collection('rooms').doc(roomId);
+  var snap = await ref.get();
+  if(!snap.exists) throw new Error('Phòng không tồn tại!');
+  var data = snap.data();
+  if(data.gameStatus!=='waiting') throw new Error('Game đã bắt đầu, không thể tham gia!');
+  var pids = Object.keys(data.players||{});
+  if(pids.length>=15) throw new Error('Phòng đã đầy (tối đa 15 người)!');
+  var pid = 'player_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
+  var u = {};
+  u['players.'+pid] = {name:playerName,totalScore:0,roundScore:0,cardsInRound:[],
+    status:'playing',hasSecondChance:false,isAdmin:false,connected:true,joinedAt:Date.now()};
+  u.playerOrder = firebase.firestore.FieldValue.arrayUnion(pid);
+  await ref.update(u);
+  return {roomId:roomId, playerId:pid};
+}
+
+// ── Flip card (full transaction) ───────────────────────────────
+async function flipCard(roomId, playerId) {
+  if(!db) throw new Error('Firebase chưa được cấu hình!');
+  var ref = db.collection('rooms').doc(roomId);
+
+  return db.runTransaction(async function(tx) {
+    var snap = await tx.get(ref);
+    var data = snap.data();
+    if(data.currentPlayer!==playerId) throw new Error('Không phải lượt của bạn!');
+    if(data.gameStatus!=='playing') throw new Error('Game chưa bắt đầu!');
+    if(data.roundStatus!=='playing') throw new Error('Vòng đang kết thúc!');
+    var player = data.players[playerId];
+    if(player.status!=='playing') throw new Error('Bạn đã dừng hoặc bị bust!');
+
+    var deck = data.deck.slice();
+    if(!deck.length) deck = mkDeck();
+    var rawCard = deck.shift();
+    var card = s2c(rawCard);
+    var updates = {deck:deck};
+
+    // Handle Flip3
+    if(card.type==='special' && card.value===SC.FLIP3) {
+      return handleFlip3(tx, ref, data, playerId, deck, updates, card);
+    }
+    return processCard(tx, ref, data, playerId, card, updates);
   });
+}
 
-  // ─── Listen to Firebase ─────────────────────────────────────
-  function startListening() {
-    if (state.unsubscribe) state.unsubscribe();
-    state.unsubscribe = GameModule.subscribeToRoom(state.roomId, onRoomUpdate);
-  }
+function handleFlip3(tx, ref, data, playerId, deck, updates, flip3Card) {
+  var player = data.players[playerId];
+  var cards = (player.cardsInRound||[]).map(s2c);
+  cards.push(flip3Card); // add the Flip3 card itself
+  var drawnCards = [flip3Card];
+  var bust = false, bustCard = null;
 
-  let lastRoundStatus = null;
-  let lastFlip7Winner = null;
+  for (var i = 0; i < 3; i++) {
+    if(!deck.length) deck = mkDeck();
+    var raw = deck.shift(); var card = s2c(raw);
+    drawnCards.push(card);
 
-  function onRoomUpdate(data) {
-    state.roomData = data;
-
-    // Flip7 banner
-    if (data.flip7Winner && data.flip7Winner !== lastFlip7Winner) {
-      lastFlip7Winner = data.flip7Winner;
-      const winner = data.players[data.flip7Winner];
-      if (winner) UIModule.showFlip7Banner(winner.name);
-    }
-    lastRoundStatus = data.roundStatus;
-
-    if (data.gameStatus === 'waiting') {
-      renderWaiting(data);
-    } else if (data.gameStatus === 'playing') {
-      renderGame(data);
-    } else if (data.gameStatus === 'finished') {
-      renderWinner(data);
-    }
-  }
-
-  // ─── Waiting screen ─────────────────────────────────────────
-  function renderWaiting(data) {
-    showScreen('screen-waiting');
-    document.getElementById('display-room-code').textContent = state.roomId;
-
-    const players = data.players || {};
-    const playerIds = data.playerOrder || Object.keys(players);
-
-    document.getElementById('player-count-badge').textContent = `${playerIds.length}/15`;
-
-    const listEl = document.getElementById('waiting-player-list');
-    listEl.innerHTML = playerIds.map(pid => {
-      const p = players[pid];
-      return `<div class="player-row" style="margin-bottom:8px;">
-        <span>${p.isAdmin ? '👑' : '👤'} ${UIModule.escapeHtml(p.name)}</span>
-        ${p.isAdmin ? '<span style="font-size:0.75rem;color:var(--gold);margin-left:8px;">Admin</span>' : ''}
-      </div>`;
-    }).join('');
-  }
-
-  // ─── Game screen ─────────────────────────────────────────────
-  function renderGame(data) {
-    const player = data.players[state.playerId];
-    if (!player) return;
-
-    const isMyTurn = data.currentPlayer === state.playerId;
-    const myStatus = player.status;
-
-    // If bust or stopped mid-round, show status screen
-    if (myStatus !== 'playing' && data.roundStatus === 'playing') {
-      renderStatusScreen(data, player);
-      return;
-    }
-
-    showScreen('screen-game');
-
-    // Header
-    document.getElementById('my-name-display').textContent = state.playerName;
-    document.getElementById('room-display').textContent = `Phòng: ${state.roomId}`;
-    document.getElementById('round-display').textContent = data.round || 1;
-
-    // Scores
-    const myTotal = player.totalScore || 0;
-    const myRound = player.roundScore || 0;
-    document.getElementById('my-total-score').textContent = myTotal;
-    document.getElementById('my-round-score').textContent = myRound;
-    document.getElementById('score-bar').style.width = Math.min((myTotal / 200) * 100, 100) + '%';
-
-    // Turn indicator
-    const turnEl = document.getElementById('turn-indicator');
-    if (data.roundStatus === 'endingRound') {
-      turnEl.textContent = '🎉 Vòng kết thúc! Chuẩn bị vòng mới...';
-      turnEl.className = 'turn-indicator other-turn';
-    } else if (isMyTurn && myStatus === 'playing') {
-      turnEl.textContent = '⚡ Đến lượt bạn!';
-      turnEl.className = 'turn-indicator my-turn';
-    } else {
-      const cp = data.players[data.currentPlayer];
-      turnEl.textContent = cp ? `Đợi ${cp.name} đi...` : 'Đang chờ...';
-      turnEl.className = 'turn-indicator other-turn';
-    }
-
-    // My cards
-    const cardsEl = document.getElementById('my-cards-row');
-    cardsEl.innerHTML = UIModule.renderCardList(player.cardsInRound);
-
-    // Buttons
-    const canAct = isMyTurn && myStatus === 'playing' && data.roundStatus === 'playing' && !state.pendingFreezeCard;
-    document.getElementById('btn-flip').disabled = !canAct;
-    document.getElementById('btn-stop').disabled = !canAct;
-
-    // All players
-    const playerIds = data.playerOrder || Object.keys(data.players);
-    const allEl = document.getElementById('all-players-list');
-    allEl.innerHTML = playerIds.map(pid =>
-      UIModule.renderPlayerRow(pid, data.players[pid], data.currentPlayer, pid === state.playerId)
-    ).join('');
-  }
-
-  function renderStatusScreen(data, player) {
-    showScreen('screen-status');
-    const statusEl = document.getElementById('status-content');
-
-    if (player.status === 'bust') {
-      statusEl.innerHTML = `
-        <div class="big-icon">💥</div>
-        <h2>BUST!</h2>
-        <p>Bạn đã rút lá trùng — điểm vòng này bằng 0.</p>
-        <p style="margin-top:12px;">Đợi những người còn lại hoàn thành lượt...</p>
-      `;
-    } else {
-      statusEl.innerHTML = `
-        <div class="big-icon">✋</div>
-        <h2>Đã dừng</h2>
-        <p>Bạn đã lưu <strong>${player.totalScore}</strong> điểm tổng.</p>
-        <p style="margin-top:12px;">Đợi vòng mới...</p>
-      `;
-    }
-
-    // Show all players
-    const playerIds = data.playerOrder || Object.keys(data.players);
-    const listEl = document.getElementById('status-player-list');
-    listEl.innerHTML = playerIds.map(pid =>
-      UIModule.renderPlayerRow(pid, data.players[pid], data.currentPlayer, pid === state.playerId)
-    ).join('');
-  }
-
-  // ─── Winner screen ────────────────────────────────────────────
-  function renderWinner(data) {
-    showScreen('screen-winner');
-    const winner = data.players[data.winner];
-
-    document.getElementById('winner-content').innerHTML = `
-      <div class="winner-trophy">🏆</div>
-      <div class="winner-title">CHIẾN THẮNG!</div>
-      <div class="winner-name">${UIModule.escapeHtml(winner?.name || '???')}</div>
-      <div class="winner-score">${winner?.totalScore || 0} điểm</div>
-    `;
-
-    const playerIds = data.playerOrder || Object.keys(data.players);
-    const sorted = [...playerIds].sort((a, b) =>
-      (data.players[b].totalScore || 0) - (data.players[a].totalScore || 0)
-    );
-
-    document.getElementById('final-scores').innerHTML = sorted.map((pid, i) => {
-      const p = data.players[pid];
-      const medals = ['🥇', '🥈', '🥉'];
-      return `
-        <div class="player-row ${pid === state.playerId ? 'me' : ''}">
-          <div class="player-row-header">
-            <span>${medals[i] || (i + 1) + '.'}</span>
-            <span class="player-name">${UIModule.escapeHtml(p.name)}</span>
-            <span class="player-score-total">${p.totalScore || 0} điểm</span>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  // ─── Game actions ─────────────────────────────────────────────
-  document.getElementById('btn-flip').addEventListener('click', async () => {
-    if (!state.roomId || !state.playerId) return;
-    document.getElementById('btn-flip').disabled = true;
-    document.getElementById('btn-stop').disabled = true;
-
-    try {
-      const result = await GameModule.flipCard(state.roomId, state.playerId);
-
-      if (result.drawnCard) {
-        UIModule.showCardDrawn(result.drawnCard, result);
-      }
-
-      if (result.requireFreezeTarget) {
-        state.pendingFreezeCard = true;
-        UIModule.showFreezeSelector(
-          state.roomData.players,
-          state.playerId,
-          async (targetId) => {
-            state.pendingFreezeCard = false;
-            try {
-              await GameModule.applyFreeze(state.roomId, state.playerId, targetId);
-              UIModule.showToast('❄️ Đã đóng băng người chơi!', 'info');
-            } catch (e) {
-              UIModule.showToast(e.message, 'danger');
-            }
-          }
-        );
-      }
-
-      if (result.drawnCards) {
-        // Flip3 - show last drawn card
-        const last = result.drawnCards[result.drawnCards.length - 1];
-        if (last) UIModule.showCardDrawn(last, result);
-      }
-
-    } catch (e) {
-      UIModule.showToast(e.message, 'danger');
-      // Re-enable if still my turn
-      if (state.roomData?.currentPlayer === state.playerId) {
-        document.getElementById('btn-flip').disabled = false;
-        document.getElementById('btn-stop').disabled = false;
-      }
-    }
-  });
-
-  document.getElementById('btn-stop').addEventListener('click', async () => {
-    if (!state.roomId || !state.playerId) return;
-    document.getElementById('btn-flip').disabled = true;
-    document.getElementById('btn-stop').disabled = true;
-
-    try {
-      const result = await GameModule.stopTurn(state.roomId, state.playerId);
-      UIModule.showToast(`✋ Đã dừng! Lưu ${result.total} điểm tổng.`, 'success');
-    } catch (e) {
-      UIModule.showToast(e.message, 'danger');
-    }
-  });
-
-  // ─── Auto-reconnect ────────────────────────────────────────────
-  window.addEventListener('load', () => {
-    const sess = loadSession();
-    if (sess && sess.roomId && sess.playerId) {
-      state.roomId = sess.roomId;
-      state.playerId = sess.playerId;
-      state.playerName = sess.playerName;
-
-      // Pre-fill form
-      document.getElementById('input-name').value = sess.playerName || '';
-      document.getElementById('input-room').value = sess.roomId || '';
-
-      // Try to reconnect
-      db.collection('rooms').doc(sess.roomId).get().then(snap => {
-        if (snap.exists) {
-          startListening();
+    if(card.type==='number') {
+      if(hasNum(cards, card.value)) {
+        if(hasSC(cards)) {
+          cards = removeSC(cards);
+          var di = cards.findIndex(function(c){return c.type==='number'&&c.value===card.value;});
+          if(di>=0) cards.splice(di,1);
+          cards.push(card);
+          continue;
         }
-      }).catch(() => {});
+        bust = true; bustCard = card; break;
+      }
+    }
+    cards.push(card);
+  }
+
+  updates.deck = deck;
+
+  if(bust) {
+    updates['players.'+playerId+'.status']='bust';
+    updates['players.'+playerId+'.roundScore']=0;
+    updates['players.'+playerId+'.cardsInRound']=[];
+    var d2 = mergePlayers(data, playerId, {status:'bust',roundScore:0,cardsInRound:[]});
+    advanceTurnInTx(tx, ref, d2, playerId, updates);
+    return {bust:true, bustCard:bustCard, drawnCard:drawnCards[drawnCards.length-1]};
+  }
+
+  var score = calcScore(cards);
+  var storables = cards.map(c2s);
+  updates['players.'+playerId+'.cardsInRound']=storables;
+  updates['players.'+playerId+'.roundScore']=score;
+
+  if(isFlip7(cards)) {
+    triggerFlip7InTx(tx, ref, data, playerId, updates, score);
+    return {flip7:true, drawnCard:drawnCards[drawnCards.length-1]};
+  }
+  tx.update(ref, updates);
+  return {drawnCard:drawnCards[drawnCards.length-1], roundScore:score};
+}
+
+function processCard(tx, ref, data, playerId, card, updates) {
+  var player = data.players[playerId];
+  var cards = (player.cardsInRound||[]).map(s2c);
+
+  if(card.type==='number') {
+    if(hasNum(cards, card.value)) {
+      // Check second chance
+      if(hasSC(cards)) {
+        cards = removeSC(cards);
+        var di = cards.findIndex(function(c){return c.type==='number'&&c.value===card.value;});
+        if(di>=0) cards.splice(di,1);
+        cards.push(card);
+        var score = calcScore(cards);
+        updates['players.'+playerId+'.cardsInRound']=cards.map(c2s);
+        updates['players.'+playerId+'.roundScore']=score;
+        updates['players.'+playerId+'.hasSecondChance']=false;
+        if(isFlip7(cards)){ triggerFlip7InTx(tx,ref,data,playerId,updates,score); return {flip7:true,drawnCard:card,secondChanceUsed:true}; }
+        tx.update(ref, updates);
+        return {drawnCard:card, roundScore:score, secondChanceUsed:true};
+      }
+      // BUST
+      updates['players.'+playerId+'.status']='bust';
+      updates['players.'+playerId+'.roundScore']=0;
+      updates['players.'+playerId+'.cardsInRound']=[];
+      var d2 = mergePlayers(data, playerId, {status:'bust',roundScore:0,cardsInRound:[]});
+      advanceTurnInTx(tx, ref, d2, playerId, updates);
+      return {bust:true, bustCard:card, drawnCard:card};
+    }
+    // Normal number
+    cards.push(card);
+    var score = calcScore(cards);
+    updates['players.'+playerId+'.cardsInRound']=cards.map(c2s);
+    updates['players.'+playerId+'.roundScore']=score;
+    if(isFlip7(cards)){ triggerFlip7InTx(tx,ref,data,playerId,updates,score); return {flip7:true,drawnCard:card}; }
+    tx.update(ref, updates);
+    return {drawnCard:card, roundScore:score};
+  }
+
+  // Special cards
+  if(card.value===SC.FREEZE) {
+    var storables = cards.map(c2s); storables.push(c2s(card));
+    updates['players.'+playerId+'.cardsInRound']=storables;
+    tx.update(ref, updates);
+    return {drawnCard:card, requireFreezeTarget:true};
+  }
+  if(card.value===SC.SECOND_CHANCE) {
+    cards.push(card);
+    var score=calcScore(cards);
+    updates['players.'+playerId+'.cardsInRound']=cards.map(c2s);
+    updates['players.'+playerId+'.roundScore']=score;
+    updates['players.'+playerId+'.hasSecondChance']=true;
+    tx.update(ref, updates);
+    return {drawnCard:card, roundScore:score};
+  }
+  // Double / Plus cards
+  cards.push(card);
+  var score=calcScore(cards);
+  updates['players.'+playerId+'.cardsInRound']=cards.map(c2s);
+  updates['players.'+playerId+'.roundScore']=score;
+  tx.update(ref, updates);
+  return {drawnCard:card, roundScore:score};
+}
+
+function mergePlayers(data, pid, changes) {
+  var d = JSON.parse(JSON.stringify(data));
+  Object.assign(d.players[pid], changes);
+  return d;
+}
+
+function advanceTurnInTx(tx, ref, data, currentPid, updates) {
+  var pids = data.playerOrder||Object.keys(data.players);
+  var allDone = pids.every(function(pid){
+    var s=data.players[pid].status; return s==='stopped'||s==='bust';
+  });
+  if(allDone){ endRoundInTx(tx,ref,data,updates); return; }
+  var ci = pids.indexOf(currentPid), ni=(ci+1)%pids.length;
+  for(var a=0;a<pids.length;a++){
+    if(data.players[pids[ni]]&&data.players[pids[ni]].status==='playing'){
+      updates.currentPlayer=pids[ni]; tx.update(ref,updates); return;
+    }
+    ni=(ni+1)%pids.length;
+  }
+  endRoundInTx(tx,ref,data,updates);
+}
+
+function endRoundInTx(tx, ref, data, updates) {
+  var pids = data.playerOrder||Object.keys(data.players);
+  var winner = null, hi = -1;
+  pids.forEach(function(pid){
+    var p=data.players[pid];
+    if(p.status==='playing'){
+      var cards=(p.cardsInRound||[]).map(s2c);
+      var rs=calcScore(cards);
+      var tot=(p.totalScore||0)+rs;
+      updates['players.'+pid+'.totalScore']=tot;
+      updates['players.'+pid+'.roundScore']=0;
+      updates['players.'+pid+'.status']='stopped';
+      if(tot>=TARGET&&tot>hi){hi=tot;winner=pid;}
+    } else if(p.status==='stopped'){
+      var tot2=(updates['players.'+pid+'.totalScore']!==undefined)
+        ?updates['players.'+pid+'.totalScore']:(p.totalScore||0);
+      if(tot2>=TARGET&&tot2>hi){hi=tot2;winner=pid;}
     }
   });
+  if(winner){ updates.gameStatus='finished'; updates.winner=winner; }
+  else { updates.roundStatus='endingRound'; }
+  tx.update(ref, updates);
+}
 
-}); // end DOMContentLoaded
+function triggerFlip7InTx(tx, ref, data, flip7Pid, updates, flip7RoundScore) {
+  var pids = data.playerOrder||Object.keys(data.players);
+  var winner=null, hi=-1;
+  pids.forEach(function(pid){
+    var p=data.players[pid];
+    if(p.status==='bust') return;
+    var cards; var rs;
+    if(pid===flip7Pid){
+      rs = flip7RoundScore + FLIP7_BONUS;
+    } else {
+      cards=(p.cardsInRound||[]).map(s2c); rs=calcScore(cards);
+    }
+    var tot=(p.totalScore||0)+rs;
+    updates['players.'+pid+'.totalScore']=tot;
+    updates['players.'+pid+'.roundScore']=0;
+    updates['players.'+pid+'.status']='stopped';
+    if(tot>=TARGET&&tot>hi){hi=tot;winner=pid;}
+  });
+  updates.roundStatus='endingRound';
+  updates.flip7Winner=flip7Pid;
+  if(winner){ updates.gameStatus='finished'; updates.winner=winner; }
+  tx.update(ref, updates);
+}
+
+async function applyFreeze(roomId, currentPid, targetPid) {
+  if(!db) throw new Error('Firebase chưa được cấu hình!');
+  var ref=db.collection('rooms').doc(roomId);
+  return db.runTransaction(async function(tx){
+    var snap=await tx.get(ref); var data=snap.data();
+    if(data.currentPlayer!==currentPid) throw new Error('Không phải lượt của bạn!');
+    var target=data.players[targetPid];
+    if(!target||target.status!=='playing') throw new Error('Người chơi không hợp lệ!');
+    var tCards=(target.cardsInRound||[]).map(s2c);
+    var tScore=calcScore(tCards);
+    var tTotal=(target.totalScore||0)+tScore;
+    var updates={};
+    updates['players.'+targetPid+'.status']='stopped';
+    updates['players.'+targetPid+'.totalScore']=tTotal;
+    updates['players.'+targetPid+'.roundScore']=0;
+    var d2=mergePlayers(data,targetPid,{status:'stopped',totalScore:tTotal,roundScore:0});
+    if(targetPid===currentPid){
+      if(tTotal>=TARGET){updates.gameStatus='finished';updates.winner=targetPid;tx.update(ref,updates);}
+      else advanceTurnInTx(tx,ref,d2,currentPid,updates);
+    } else {
+      var allDone=Object.keys(d2.players).every(function(pid){
+        var s=d2.players[pid].status; return s==='stopped'||s==='bust';
+      });
+      if(allDone) endRoundInTx(tx,ref,d2,updates);
+      else tx.update(ref,updates);
+    }
+    return {frozen:targetPid};
+  });
+}
+
+async function stopTurn(roomId, playerId) {
+  if(!db) throw new Error('Firebase chưa được cấu hình!');
+  var ref=db.collection('rooms').doc(roomId);
+  return db.runTransaction(async function(tx){
+    var snap=await tx.get(ref); var data=snap.data();
+    if(data.currentPlayer!==playerId) throw new Error('Không phải lượt của bạn!');
+    var player=data.players[playerId];
+    if(player.status!=='playing') throw new Error('Bạn đã dừng!');
+    var cards=(player.cardsInRound||[]).map(s2c);
+    var rs=calcScore(cards);
+    var newTotal=(player.totalScore||0)+rs;
+    var updates={};
+    updates['players.'+playerId+'.status']='stopped';
+    updates['players.'+playerId+'.totalScore']=newTotal;
+    updates['players.'+playerId+'.roundScore']=0;
+    if(newTotal>=TARGET){
+      updates.gameStatus='finished'; updates.winner=playerId;
+      tx.update(ref,updates);
+    } else {
+      var d2=mergePlayers(data,playerId,{status:'stopped',totalScore:newTotal,roundScore:0});
+      advanceTurnInTx(tx,ref,d2,playerId,updates);
+    }
+    return {stopped:true, total:newTotal};
+  });
+}
+
+async function startNewRound(roomId) {
+  if(!db) return;
+  var snap=await db.collection('rooms').doc(roomId).get();
+  var data=snap.data();
+  if(!data||data.gameStatus==='finished') return;
+  var pids=data.playerOrder||Object.keys(data.players);
+  var u={round:(data.round||1)+1,deck:mkDeck(),roundStatus:'playing',flip7Winner:null,currentPlayer:pids[0]};
+  pids.forEach(function(pid){
+    u['players.'+pid+'.status']='playing';
+    u['players.'+pid+'.roundScore']=0;
+    u['players.'+pid+'.cardsInRound']=[];
+    u['players.'+pid+'.hasSecondChance']=false;
+  });
+  await db.collection('rooms').doc(roomId).update(u);
+}
+
+// ── Room subscription ──────────────────────────────────────────
+function subscribeRoom(roomId, cb) {
+  if(!db) return function(){};
+  return db.collection('rooms').doc(roomId).onSnapshot(function(snap){
+    if(snap.exists) cb(snap.data());
+  });
+}
+
+// ── Render functions ───────────────────────────────────────────
+var _newRoundTimer = null;
+
+function onRoomUpdate(data) {
+  G.roomData = data;
+  if(data.flip7Winner && data.flip7Winner!==G.lastFlip7){
+    G.lastFlip7=data.flip7Winner;
+    var w=data.players[data.flip7Winner]; if(w) showFlip7Banner(w.name);
+  }
+  if(data.gameStatus==='waiting') renderWaiting(data);
+  else if(data.gameStatus==='playing') {
+    // Auto start new round after endingRound
+    if(data.roundStatus==='endingRound') {
+      if(!_newRoundTimer) {
+        _newRoundTimer = setTimeout(function(){
+          _newRoundTimer=null;
+          startNewRound(G.roomId);
+        }, 3500);
+      }
+    } else { if(_newRoundTimer){clearTimeout(_newRoundTimer);_newRoundTimer=null;} }
+    renderGame(data);
+  }
+  else if(data.gameStatus==='finished') renderWinner(data);
+}
+
+function renderWaiting(data) {
+  showScreen('screen-waiting');
+  $('display-room-code').textContent = G.roomId||'------';
+  var players=data.players||{}, pids=data.playerOrder||Object.keys(players);
+  $('player-count-badge').textContent=pids.length+'/15';
+  $('waiting-player-list').innerHTML=pids.map(function(pid){
+    var p=players[pid]; if(!p) return '';
+    return '<div class="player-row" style="margin-bottom:8px;display:flex;align-items:center;gap:10px;">'+
+      '<span>'+(p.isAdmin?'👑':'👤')+'</span>'+
+      '<span style="font-weight:700;">'+escHtml(p.name)+(pid===G.playerId?' (Bạn)':'')+'</span>'+
+      (p.isAdmin?'<span style="font-size:0.75rem;color:var(--gold);">Admin</span>':'')+
+      '</div>';
+  }).join('');
+}
+
+function renderGame(data) {
+  var player=data.players[G.playerId]; if(!player) return;
+  var isMyTurn=data.currentPlayer===G.playerId;
+  var myStatus=player.status;
+
+  // If bust/stopped show status screen
+  if(myStatus!=='playing' && data.roundStatus==='playing'){
+    renderStatus(data,player); return;
+  }
+
+  showScreen('screen-game');
+  $('my-name-display').textContent=G.playerName||'';
+  $('room-display').textContent='Phòng: '+G.roomId;
+  $('round-display').textContent=data.round||1;
+  $('my-total-score').textContent=player.totalScore||0;
+  $('my-round-score').textContent=player.roundScore||0;
+  $('score-bar').style.width=Math.min(((player.totalScore||0)/TARGET)*100,100)+'%';
+
+  var turnEl=$('turn-indicator');
+  if(data.roundStatus==='endingRound'){
+    turnEl.textContent='🎉 Vòng kết thúc! Chuẩn bị vòng mới...';
+    turnEl.className='turn-indicator other-turn';
+  } else if(isMyTurn && myStatus==='playing'){
+    turnEl.textContent='⚡ Đến lượt bạn!';
+    turnEl.className='turn-indicator my-turn';
+  } else {
+    var cp=data.currentPlayer?data.players[data.currentPlayer]:null;
+    turnEl.textContent=cp?('Đợi '+cp.name+' đi...'):'Đang chờ...';
+    turnEl.className='turn-indicator other-turn';
+  }
+
+  $('my-cards-row').innerHTML=cardsHtml(player.cardsInRound);
+
+  var canAct=isMyTurn&&myStatus==='playing'&&data.roundStatus==='playing'&&!G.pendingFreeze;
+  $('btn-flip').disabled=!canAct;
+  $('btn-stop').disabled=!canAct;
+
+  var pids=data.playerOrder||Object.keys(data.players);
+  $('all-players-list').innerHTML=pids.map(function(pid){
+    return renderPlayerRow(pid,data.players[pid],data.currentPlayer,pid===G.playerId);
+  }).join('');
+}
+
+function renderStatus(data, player) {
+  showScreen('screen-status');
+  $('status-content').innerHTML = player.status==='bust'
+    ? '<div class="big-icon">💥</div><h2>BUST!</h2><p>Rút lá trùng — điểm vòng này = 0.</p><p style="margin-top:8px;color:var(--text-dim)">Đợi vòng mới...</p>'
+    : '<div class="big-icon">✋</div><h2>Đã dừng</h2><p>Tổng điểm: <strong>'+(player.totalScore||0)+'</strong></p><p style="margin-top:8px;color:var(--text-dim)">Đợi vòng mới...</p>';
+  var pids=data.playerOrder||Object.keys(data.players);
+  $('status-player-list').innerHTML=pids.map(function(pid){
+    return renderPlayerRow(pid,data.players[pid],data.currentPlayer,pid===G.playerId);
+  }).join('');
+}
+
+function renderWinner(data) {
+  showScreen('screen-winner');
+  var w=data.winner?data.players[data.winner]:null;
+  $('winner-content').innerHTML=
+    '<div class="winner-trophy">🏆</div>'+
+    '<div class="winner-title">CHIẾN THẮNG!</div>'+
+    '<div class="winner-name">'+escHtml(w?w.name:'???')+'</div>'+
+    '<div class="winner-score">'+(w?w.totalScore||0:0)+' điểm</div>';
+  var pids=(data.playerOrder||Object.keys(data.players)).slice()
+    .sort(function(a,b){return (data.players[b].totalScore||0)-(data.players[a].totalScore||0);});
+  var medals=['🥇','🥈','🥉'];
+  $('final-scores').innerHTML=pids.map(function(pid,i){
+    var p=data.players[pid];
+    return '<div class="player-row'+(pid===G.playerId?' me':'')+'">'+
+      '<div class="player-row-header">'+
+      '<span>'+(medals[i]||(i+1)+'.')+'</span>'+
+      '<span class="player-name">'+escHtml(p.name)+'</span>'+
+      '<span class="player-score-total">'+(p.totalScore||0)+' điểm</span>'+
+      '</div></div>';
+  }).join('');
+}
+
+// ── Drawn card display ─────────────────────────────────────────
+function showDrawnCard(card, result) {
+  var area=$('drawn-card-area');
+  if(!area) return;
+  var bg=cardColor(card), lbl=card.type==='number'?card.value:(card.label||card.value);
+  area.innerHTML='<div class="card" style="background:'+bg+'">'+lbl+'</div>';
+  area.querySelector('.card').style.animation='cardPop 0.35s cubic-bezier(0.175,0.885,0.32,1.275)';
+  if(result.bust) showToast('💥 BUST! Điểm vòng này = 0','danger',3500);
+  else if(result.secondChanceUsed) showToast('🍀 Second Chance đã cứu bạn!','success',3000);
+  else if(result.flip7) showToast('🎉 FLIP 7! Kết thúc vòng!','success',3500);
+}
+
+// ── Event listeners ────────────────────────────────────────────
+$('btn-join').addEventListener('click', async function(){
+  var name=$('input-name').value.trim();
+  var room=$('input-room').value.trim().toUpperCase();
+  var err=$('join-error'); err.style.display='none';
+  if(!name){err.textContent='Vui lòng nhập tên!';err.style.display='block';return;}
+  if(room.length!==6){err.textContent='Mã phòng phải có 6 ký tự!';err.style.display='block';return;}
+  if(!db){err.textContent='Firebase chưa được cấu hình! Điền FIREBASE_CONFIG trong index.html.';err.style.display='block';return;}
+  $('btn-join').disabled=true; $('btn-join').textContent='...';
+  try {
+    var r=await joinRoom(room,name);
+    G.roomId=r.roomId; G.playerId=r.playerId; G.playerName=name;
+    saveSession();
+    if(G.unsub) G.unsub();
+    G.unsub=subscribeRoom(G.roomId, onRoomUpdate);
+  } catch(e){
+    err.textContent=e.message; err.style.display='block';
+  } finally {
+    $('btn-join').disabled=false; $('btn-join').textContent='🎮 Vào Phòng';
+  }
+});
+
+$('display-room-code').addEventListener('click', function(){
+  if(!G.roomId) return;
+  navigator.clipboard.writeText(G.roomId)
+    .then(function(){showToast('Đã sao chép!','success',2000);})
+    .catch(function(){showToast(G.roomId,'info',5000);});
+});
+
+$('btn-flip').addEventListener('click', async function(){
+  if(!G.roomId||!G.playerId) return;
+  $('btn-flip').disabled=true; $('btn-stop').disabled=true;
+  try {
+    var result=await flipCard(G.roomId,G.playerId);
+    if(result.drawnCard) showDrawnCard(result.drawnCard, result);
+    if(result.requireFreezeTarget){
+      G.pendingFreeze=true;
+      var players=G.roomData?G.roomData.players:{};
+      var opts=Object.entries(players)
+        .filter(function(e){return e[1].status==='playing';})
+        .map(function(e){
+          return '<button class="freeze-btn" data-pid="'+e[0]+'">❄️ '+escHtml(e[1].name)+
+            '<span class="score-tag">'+(e[1].roundScore||0)+' điểm</span></button>';
+        }).join('');
+      showPopup('<h3>❄️ FREEZE – Chọn người bị đóng băng</h3>'+
+        '<p>Người được chọn sẽ dừng và lưu điểm hiện tại.</p>'+
+        '<div class="freeze-list">'+opts+'</div>');
+      document.querySelectorAll('.freeze-btn').forEach(function(btn){
+        btn.addEventListener('click', async function(){
+          hidePopup(); G.pendingFreeze=false;
+          try{
+            await applyFreeze(G.roomId,G.playerId,btn.dataset.pid);
+            showToast('❄️ Đã đóng băng!','info');
+          }catch(e){showToast(e.message,'danger');}
+        });
+      });
+    }
+  } catch(e){
+    showToast(e.message,'danger');
+    // Re-enable if still my turn
+    if(G.roomData&&G.roomData.currentPlayer===G.playerId){
+      $('btn-flip').disabled=false; $('btn-stop').disabled=false;
+    }
+  }
+});
+
+$('btn-stop').addEventListener('click', async function(){
+  if(!G.roomId||!G.playerId) return;
+  $('btn-flip').disabled=true; $('btn-stop').disabled=true;
+  try {
+    var r=await stopTurn(G.roomId,G.playerId);
+    showToast('✋ Đã dừng! Tổng: '+r.total+' điểm','success');
+  } catch(e){
+    showToast(e.message,'danger');
+    if(G.roomData&&G.roomData.currentPlayer===G.playerId){
+      $('btn-flip').disabled=false; $('btn-stop').disabled=false;
+    }
+  }
+});
+
+// ── Auto reconnect ─────────────────────────────────────────────
+(function(){
+  var sess=loadSession();
+  if(!sess||!sess.roomId||!sess.playerId||!db) return;
+  G.roomId=sess.roomId; G.playerId=sess.playerId; G.playerName=sess.playerName;
+  $('input-name').value=sess.playerName||'';
+  $('input-room').value=sess.roomId||'';
+  db.collection('rooms').doc(sess.roomId).get()
+    .then(function(snap){
+      if(snap.exists){
+        if(G.unsub) G.unsub();
+        G.unsub=subscribeRoom(G.roomId,onRoomUpdate);
+      } else { sessionStorage.removeItem('f7player'); }
+    }).catch(function(e){console.warn('Reconnect failed:',e);});
+})();
 </script>
 </body>
 </html>

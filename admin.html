@@ -16,7 +16,6 @@
       <h1>FLIP 7</h1>
       <div class="tagline">Admin – Tạo Phòng</div>
     </div>
-
     <div class="join-section">
       <div class="panel">
         <div class="panel-title">🛠 Tạo phòng mới</div>
@@ -35,46 +34,35 @@
 
   <!-- ── ADMIN LOBBY ─────────────────────────────────────── -->
   <section id="screen-admin-lobby" style="display:none">
-    <div class="game-logo" style="padding-top:20px;">
-      <h1>FLIP 7</h1>
-    </div>
-
+    <div class="game-logo" style="padding-top:20px;"><h1>FLIP 7</h1></div>
     <div class="panel">
       <div class="panel-title">Phòng của bạn</div>
       <div class="room-code" id="admin-room-code" title="Nhấn để sao chép">------</div>
       <div class="room-code-label">Chia sẻ mã này cho người chơi</div>
     </div>
-
     <div class="panel">
-      <div class="panel-title">
-        Người chơi
-        <span class="player-count" id="admin-player-count">0/15</span>
-      </div>
+      <div class="panel-title">Người chơi <span class="player-count" id="admin-player-count">0/15</span></div>
       <div id="admin-player-list"></div>
       <div class="info-msg" id="admin-waiting-msg">Đợi người chơi tham gia...</div>
     </div>
-
     <button class="btn btn-primary" id="btn-start" disabled>🎮 Bắt đầu Game</button>
     <div class="info-msg" id="start-hint" style="margin-top:8px;">Cần ít nhất 2 người chơi</div>
   </section>
 
   <!-- ── ADMIN GAME VIEW ─────────────────────────────────── -->
   <section id="screen-admin-game" style="display:none">
-
-    <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 0 8px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0 8px;">
       <div>
         <div class="player-name-display" id="admin-name-display">Admin</div>
         <div style="font-size:0.8rem;color:var(--text-dim);">Phòng: <span id="admin-room-display">—</span></div>
       </div>
       <div class="round-label">Vòng <span id="admin-round">1</span></div>
     </div>
-
     <div class="panel" style="padding:16px;">
       <div class="panel-title">Lượt hiện tại</div>
-      <div id="current-turn-display" style="font-size:1.2rem; font-weight:700; color:var(--gold);">—</div>
+      <div id="current-turn-display" style="font-size:1.2rem;font-weight:700;color:var(--gold);">—</div>
       <div class="turn-indicator" id="admin-turn-status" style="margin-top:8px;">—</div>
     </div>
-
     <div class="panel">
       <div class="panel-title">Bộ bài</div>
       <div class="deck-info">
@@ -83,20 +71,14 @@
         <span>lá</span>
       </div>
     </div>
-
     <div class="panel">
       <div class="panel-title">Bảng xếp hạng</div>
       <div id="admin-game-players"></div>
     </div>
-
     <div class="panel">
       <div class="panel-title">⚠️ Điều khiển Admin</div>
-      <button class="btn btn-danger btn-sm" id="btn-force-end-round" style="margin-bottom:8px;">
-        ⏭ Kết thúc vòng ngay
-      </button>
-      <button class="btn btn-ghost btn-sm" id="btn-reset-game">
-        🔄 Đặt lại game
-      </button>
+      <button class="btn btn-danger btn-sm" id="btn-force-end-round" style="margin-bottom:8px;">⏭ Kết thúc vòng ngay</button>
+      <button class="btn btn-ghost btn-sm" id="btn-reset-game">🔄 Đặt lại game</button>
     </div>
   </section>
 
@@ -111,311 +93,390 @@
     </div>
     <div class="btn-row" style="margin-top:16px;">
       <button class="btn btn-primary" id="btn-new-game">🔄 Game Mới</button>
-      <button class="btn btn-ghost" id="btn-home">🏠 Trang chủ</button>
+      <button class="btn btn-ghost" onclick="location.href='admin.html'">🏠 Trang chủ</button>
     </div>
   </section>
 
-</div><!-- /app -->
+</div>
 
-<!-- ✅ Scripts theo đúng thứ tự phụ thuộc -->
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="firebase.js"></script>
-<script src="deck.js"></script>
-<script src="game.js"></script>
-<script src="ui.js"></script>
+
 <script>
-// ✅ Toàn bộ logic bọc trong DOMContentLoaded để chắc chắn
-// tất cả scripts đã chạy xong trước khi addEventListener được gọi
-window.addEventListener('DOMContentLoaded', function () {
+// ═══════════════════════════════════════════════════════════════
+// BƯỚC 1: Điền Firebase config của bạn vào đây
+// Lấy tại: Firebase Console > Project Settings > Your apps > Web
+// ═══════════════════════════════════════════════════════════════
+var FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAjbj519mJnX18lcMavPTgkAC-OQ4L5dsY",
+  authDomain: "flip-45e37.firebaseapp.com",
+  projectId: "flip-45e37",
+  storageBucket: "flip-45e37.firebasestorage.app",
+  messagingSenderId: "774430389314",
+  appId: "1:774430389314:web:114bd49e5794b3dcb329db",
+  measurementId: "G-JT42H3S38R"
+};
+// ═══════════════════════════════════════════════════════════════
 
-  // ─── State ────────────────────────────────────────────────────
-  var state = {
-    roomId: null,
-    adminId: null,
-    adminName: null,
-    roomData: null,
-    unsubscribe: null,
-  };
+// ── Deck logic ────────────────────────────────────────────────
+var SC = { FREEZE:'freeze', SECOND_CHANCE:'second_chance', FLIP3:'flip3',
+           DOUBLE:'double', PLUS2:'+2', PLUS4:'+4', PLUS6:'+6', PLUS8:'+8', PLUS10:'+10' };
 
-  // ─── Session persistence ──────────────────────────────────────
-  function saveAdminSession() {
-    sessionStorage.setItem('flip7_admin', JSON.stringify({
-      roomId: state.roomId,
-      adminId: state.adminId,
-      adminName: state.adminName,
-    }));
+function createDeck() {
+  var deck = [];
+  for (var n = 0; n <= 12; n++) {
+    var count = n === 0 ? 1 : n;
+    for (var i = 0; i < count; i++) deck.push({type:'number', value:n});
   }
-
-  function loadAdminSession() {
-    try { return JSON.parse(sessionStorage.getItem('flip7_admin')); }
-    catch (e) { return null; }
+  [{v:SC.FREEZE,l:'Freeze'},{v:SC.SECOND_CHANCE,l:'Second Chance'},{v:SC.FLIP3,l:'Flip 3'}]
+    .forEach(function(s){ for(var i=0;i<3;i++) deck.push({type:'special',value:s.v,label:s.l}); });
+  [{v:SC.DOUBLE,l:'Double'},{v:SC.PLUS2,l:'+2'},{v:SC.PLUS4,l:'+4'},
+   {v:SC.PLUS6,l:'+6'},{v:SC.PLUS8,l:'+8'},{v:SC.PLUS10,l:'+10'}]
+    .forEach(function(s){ deck.push({type:'special',value:s.v,label:s.l}); });
+  for (var i = deck.length-1; i > 0; i--) {
+    var j = Math.floor(Math.random()*(i+1)); var t=deck[i]; deck[i]=deck[j]; deck[j]=t;
   }
+  return deck;
+}
+function createStorableDeck(){ return createDeck().map(function(c){return JSON.stringify(c);}); }
+function s2c(s){ return JSON.parse(s); }
+function c2s(c){ return JSON.stringify(c); }
 
-  // ─── Screens ──────────────────────────────────────────────────
-  function showScreen(id) {
-    ['screen-create','screen-admin-lobby','screen-admin-game','screen-admin-winner']
-      .forEach(function(s) {
-        document.getElementById(s).style.display = 'none';
-      });
-    document.getElementById(id).style.display = 'block';
+function calcScore(cards) {
+  var num=0, mult=1, bonus=0;
+  cards.forEach(function(c){
+    if(c.type==='number') num+=c.value;
+    else if(c.value===SC.DOUBLE) mult*=2;
+    else if([SC.PLUS2,SC.PLUS4,SC.PLUS6,SC.PLUS8,SC.PLUS10].indexOf(c.value)>=0) bonus+=parseInt(c.value);
+  });
+  return (num*mult)+bonus;
+}
+function isFlip7(cards){
+  var nums=cards.filter(function(c){return c.type==='number';});
+  return (new Set(nums.map(function(c){return c.value;}))).size>=7;
+}
+function hasNum(cards,v){ return cards.some(function(c){return c.type==='number'&&c.value===v;}); }
+function hasSC(cards){ return cards.some(function(c){return c.type==='special'&&c.value===SC.SECOND_CHANCE;}); }
+function removeSC(cards){
+  var idx=cards.findIndex(function(c){return c.type==='special'&&c.value===SC.SECOND_CHANCE;});
+  if(idx<0) return cards; var a=[].concat(cards); a.splice(idx,1); return a;
+}
+
+// ── UI helpers ────────────────────────────────────────────────
+function escHtml(s){ var d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+
+function cardColor(card) {
+  if(card.type==='number'){ return 'hsl('+(card.value*27+10)%360+',70%,52%)'; }
+  var m={freeze:'#4fc3f7',second_chance:'#81c784',flip3:'#ff8a65',
+         double:'#ffd54f','+2':'#ce93d8','+4':'#ce93d8','+6':'#ce93d8','+8':'#ce93d8','+10':'#ce93d8'};
+  return m[card.value]||'#aaa';
+}
+function renderCardMini(raw){
+  var c=s2c(raw), bg=cardColor(c), lbl=c.type==='number'?c.value:c.label;
+  return '<div class="card-mini" style="background:'+bg+'">'+lbl+'</div>';
+}
+function renderCards(arr){
+  if(!arr||!arr.length) return '<span class="no-cards">Chưa có lá nào</span>';
+  return arr.map(renderCardMini).join('');
+}
+function statusIcon(s){ return s==='playing'?'🟢':s==='stopped'?'🔵':s==='bust'?'💥':'⚫'; }
+
+function renderPlayerRow(pid, p, currentPlayer, isMe) {
+  var isCur = pid===currentPlayer;
+  return '<div class="player-row'+(isCur?' active-player':'')+(isMe?' me':'')+'">'+
+    '<div class="player-row-header">'+
+    '<span>'+statusIcon(p.status)+'</span>'+
+    '<span class="player-name">'+escHtml(p.name)+(isMe?' (Bạn)':'')+'</span>'+
+    (isCur?'<span class="turn-badge">Đang đi</span>':'')+
+    '<span class="player-score-total">'+(p.totalScore||0)+' điểm</span>'+
+    '</div>'+
+    '<div class="player-cards">'+renderCards(p.cardsInRound)+'</div>'+
+    (p.roundScore>0?'<div class="round-score-badge">+'+p.roundScore+' vòng này</div>':'')+
+    '</div>';
+}
+
+function showToast(msg, type, dur) {
+  var c=document.getElementById('toast-container');
+  if(!c){ c=document.createElement('div');c.id='toast-container';document.body.appendChild(c); }
+  var t=document.createElement('div'); t.className='toast toast-'+(type||'info');
+  t.textContent=msg; c.appendChild(t);
+  setTimeout(function(){ t.classList.add('fade-out'); setTimeout(function(){t.remove();},500); }, dur||3000);
+}
+
+function showFlip7Banner(name) {
+  var b=document.createElement('div'); b.className='flip7-banner';
+  b.innerHTML='<div class="flip7-content"><div class="flip7-icon">🃏</div>'+
+    '<div class="flip7-title">FLIP 7!</div>'+
+    '<div class="flip7-sub">'+escHtml(name)+' đã lật 7 lá khác nhau!</div>'+
+    '<div class="flip7-bonus">+15 điểm thưởng</div></div>';
+  document.body.appendChild(b);
+  setTimeout(function(){ b.classList.add('fade-out'); setTimeout(function(){b.remove();},600); },4000);
+}
+
+function setLoading(id, on) {
+  var b=document.getElementById(id); if(!b) return;
+  b.disabled=on; b._orig=b._orig||b.textContent; b.textContent=on?'...':b._orig;
+}
+
+function showScreen(id) {
+  ['screen-create','screen-admin-lobby','screen-admin-game','screen-admin-winner']
+    .forEach(function(s){ document.getElementById(s).style.display='none'; });
+  document.getElementById(id).style.display='block';
+}
+
+// ── Firebase init ─────────────────────────────────────────────
+var db = null;
+var configOK = !Object.values(FIREBASE_CONFIG).some(function(v){ return v.indexOf('YOUR_')>=0; });
+
+if (!configOK) {
+  document.getElementById('app').innerHTML =
+    '<div style="font-family:monospace;background:#1e3d2e;border:1px solid #f5c842;border-radius:12px;padding:32px;max-width:560px;margin:40px auto;">'+
+    '<div style="font-size:2rem;margin-bottom:8px;">🔧 Cần cấu hình Firebase</div>'+
+    '<p style="color:#a8c4b4;margin-bottom:16px;">Mở file <code>admin.html</code>, tìm biến <code>FIREBASE_CONFIG</code> ở đầu script và điền thông tin Firebase project vào.</p>'+
+    '<div style="background:#0f2218;border-radius:8px;padding:16px;margin-bottom:16px;">'+
+    '<b style="color:#f5c842;">Lấy config tại:</b><br><br>'+
+    '<a href="https://console.firebase.google.com" target="_blank" style="color:#4a9eed;">console.firebase.google.com</a><br>'+
+    '→ Project Settings ⚙️ → Your apps → &lt;/&gt; Web → firebaseConfig</div>'+
+    '<div style="background:#0f2218;border-radius:8px;padding:16px;">'+
+    '<b style="color:#f5c842;">Mẫu:</b><pre style="color:#81c784;font-size:0.8rem;white-space:pre-wrap;">var FIREBASE_CONFIG = {\n  apiKey: "AIzaSy...",\n  authDomain: "app.firebaseapp.com",\n  projectId: "my-app",\n  storageBucket: "my-app.appspot.com",\n  messagingSenderId: "123",\n  appId: "1:123:web:abc"\n};</pre></div></div>';
+} else {
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+    db.enablePersistence({synchronizeTabs:true}).catch(function(){});
+  } catch(e) {
+    document.getElementById('app').innerHTML =
+      '<div style="font-family:monospace;background:#4a1e1e;border:1px solid #e84343;border-radius:12px;padding:32px;max-width:560px;margin:40px auto;">'+
+      '<div style="font-size:2rem;">⚠️ Lỗi Firebase</div>'+
+      '<p style="margin-top:12px;color:#f0ede6;">'+e.message+'</p>'+
+      '<p style="margin-top:8px;color:#a8c4b4;">Kiểm tra lại FIREBASE_CONFIG trong admin.html và đảm bảo Firestore đã được bật.</p></div>';
   }
+}
 
-  function showErr(el, msg) {
-    el.textContent = msg;
-    el.style.display = 'block';
-  }
+// ── Game state ─────────────────────────────────────────────────
+var G = { roomId:null, adminId:null, adminName:null, roomData:null, unsub:null, lastFlip7:null };
 
-  // ─── Create room ──────────────────────────────────────────────
-  document.getElementById('btn-create').addEventListener('click', async function () {
-    var name = document.getElementById('admin-name').value.trim();
-    var errEl = document.getElementById('create-error');
-    errEl.style.display = 'none';
+function saveSession() {
+  sessionStorage.setItem('f7admin', JSON.stringify({roomId:G.roomId,adminId:G.adminId,adminName:G.adminName}));
+}
+function loadSession() { try{return JSON.parse(sessionStorage.getItem('f7admin'));}catch(e){return null;} }
 
-    if (!name) { showErr(errEl, 'Vui lòng nhập tên!'); return; }
+// ── Game functions ────────────────────────────────────────────
+var TARGET = 200, FLIP7_BONUS = 15;
 
-    UIModule.setLoading('btn-create', true);
-    try {
-      var result = await GameModule.createRoom(name);
-      state.roomId = result.roomId;
-      state.adminId = result.playerId;
-      state.adminName = name;
-      saveAdminSession();
-      startListening();
-    } catch (e) {
-      showErr(errEl, e.message);
-    } finally {
-      UIModule.setLoading('btn-create', false);
+function genCode() {
+  var ch='ABCDEFGHJKLMNPQRSTUVWXYZ23456789', c='';
+  for(var i=0;i<6;i++) c+=ch[Math.floor(Math.random()*ch.length)];
+  return c;
+}
+
+async function createRoom(adminName) {
+  if(!db) throw new Error('Firebase chưa được cấu hình!');
+  var roomId=genCode(), adminId='admin_'+Date.now();
+  await db.collection('rooms').doc(roomId).set({
+    gameStatus:'waiting', targetScore:TARGET, round:1, currentPlayer:null,
+    deck:[], roundStatus:'playing', flip7Winner:null,
+    adminId:adminId, adminName:adminName,
+    createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+    playerOrder:[adminId],
+    players:{
+      [adminId]:{name:adminName,totalScore:0,roundScore:0,cardsInRound:[],
+                 status:'playing',hasSecondChance:false,isAdmin:true,connected:true,joinedAt:Date.now()}
     }
   });
+  return {roomId:roomId, playerId:adminId};
+}
 
-  // ─── Room code copy ───────────────────────────────────────────
-  document.getElementById('admin-room-code').addEventListener('click', function () {
-    if (!state.roomId) return;
-    navigator.clipboard.writeText(state.roomId)
-      .then(function () { UIModule.showToast('Đã sao chép mã phòng!', 'success', 2000); })
-      .catch(function () { UIModule.showToast(state.roomId, 'info', 4000); });
+async function startGame(roomId, adminId) {
+  if(!db) throw new Error('Firebase chưa được cấu hình!');
+  var snap=await db.collection('rooms').doc(roomId).get();
+  var data=snap.data();
+  if(data.adminId!==adminId) throw new Error('Chỉ admin mới có thể bắt đầu!');
+  var pids=data.playerOrder||Object.keys(data.players);
+  if(pids.length<2) throw new Error('Cần ít nhất 2 người chơi!');
+  var updates={gameStatus:'playing',round:1,currentPlayer:pids[0],
+               deck:createStorableDeck(),roundStatus:'playing',flip7Winner:null,playerOrder:pids};
+  pids.forEach(function(pid){
+    updates['players.'+pid+'.totalScore']=0;
+    updates['players.'+pid+'.roundScore']=0;
+    updates['players.'+pid+'.cardsInRound']=[];
+    updates['players.'+pid+'.status']='playing';
+    updates['players.'+pid+'.hasSecondChance']=false;
   });
+  await db.collection('rooms').doc(roomId).update(updates);
+}
 
-  // ─── Start game ───────────────────────────────────────────────
-  document.getElementById('btn-start').addEventListener('click', async function () {
-    UIModule.setLoading('btn-start', true);
-    try {
-      await GameModule.startGame(state.roomId, state.adminId);
-    } catch (e) {
-      UIModule.showToast(e.message, 'danger');
-    } finally {
-      UIModule.setLoading('btn-start', false);
-    }
+function subscribeRoom(roomId, cb) {
+  if(!db) return function(){};
+  return db.collection('rooms').doc(roomId).onSnapshot(function(snap){ if(snap.exists) cb(snap.data()); });
+}
+
+async function startNewRound(roomId) {
+  if(!db) return;
+  var snap=await db.collection('rooms').doc(roomId).get();
+  var data=snap.data();
+  if(!data||data.gameStatus==='finished') return;
+  var pids=data.playerOrder||Object.keys(data.players);
+  var updates={round:(data.round||1)+1,deck:createStorableDeck(),
+               roundStatus:'playing',flip7Winner:null,currentPlayer:pids[0]};
+  pids.forEach(function(pid){
+    updates['players.'+pid+'.status']='playing';
+    updates['players.'+pid+'.roundScore']=0;
+    updates['players.'+pid+'.cardsInRound']=[];
+    updates['players.'+pid+'.hasSecondChance']=false;
   });
+  await db.collection('rooms').doc(roomId).update(updates);
+}
 
-  // ─── Force end round ──────────────────────────────────────────
-  document.getElementById('btn-force-end-round').addEventListener('click', async function () {
-    if (!confirm('Kết thúc vòng này ngay?')) return;
-    var data = state.roomData;
-    if (!data) return;
+// ── Render functions ──────────────────────────────────────────
+function renderLobby(data) {
+  showScreen('screen-admin-lobby');
+  document.getElementById('admin-room-code').textContent=G.roomId||'------';
+  var players=data.players||{}, pids=data.playerOrder||Object.keys(players);
+  document.getElementById('admin-player-count').textContent=pids.length+'/15';
+  document.getElementById('admin-player-list').innerHTML=pids.map(function(pid){
+    var p=players[pid]; if(!p) return '';
+    return '<div class="player-row" style="margin-bottom:8px;display:flex;align-items:center;gap:10px;">'+
+      '<span>'+(p.isAdmin?'👑':'👤')+'</span>'+
+      '<span style="flex:1;font-weight:700;">'+escHtml(p.name)+'</span>'+
+      (p.isAdmin?'<span style="font-size:0.75rem;color:var(--gold);">Admin</span>':'')+
+      '</div>';
+  }).join('');
+  var canStart=pids.length>=2;
+  document.getElementById('btn-start').disabled=!canStart;
+  document.getElementById('admin-waiting-msg').style.display=canStart?'none':'block';
+  document.getElementById('start-hint').style.display=canStart?'none':'block';
+}
 
-    var playerIds = data.playerOrder || Object.keys(data.players);
-    var updates = { roundStatus: 'endingRound' };
-    playerIds.forEach(function (pid) {
-      if (data.players[pid].status === 'playing') {
-        updates['players.' + pid + '.status'] = 'stopped';
-      }
-    });
+function renderGameView(data) {
+  showScreen('screen-admin-game');
+  document.getElementById('admin-name-display').textContent=G.adminName||'Admin';
+  document.getElementById('admin-room-display').textContent=G.roomId||'—';
+  document.getElementById('admin-round').textContent=data.round||1;
+  var cp=data.currentPlayer?data.players[data.currentPlayer]:null;
+  document.getElementById('current-turn-display').textContent=cp?cp.name:'—';
+  var st=document.getElementById('admin-turn-status');
+  if(data.roundStatus==='endingRound'){
+    st.textContent='🎉 Vòng đang kết thúc...'; st.className='turn-indicator other-turn';
+  } else {
+    st.textContent=cp?(cp.name+' đang quyết định...'):'Đang chờ...'; st.className='turn-indicator';
+  }
+  document.getElementById('deck-count').textContent=(data.deck||[]).length;
+  var pids=(data.playerOrder||Object.keys(data.players)).slice()
+    .sort(function(a,b){return (data.players[b].totalScore||0)-(data.players[a].totalScore||0);});
+  document.getElementById('admin-game-players').innerHTML=pids.map(function(pid){
+    return renderPlayerRow(pid,data.players[pid],data.currentPlayer,pid===G.adminId);
+  }).join('');
+}
 
-    try {
-      await db.collection('rooms').doc(state.roomId).update(updates);
-      UIModule.showToast('Đã kết thúc vòng!', 'warn');
-    } catch (e) {
-      UIModule.showToast(e.message, 'danger');
-    }
+function renderWinner(data) {
+  showScreen('screen-admin-winner');
+  var w=data.winner?data.players[data.winner]:null;
+  document.getElementById('admin-winner-content').innerHTML=
+    '<div class="winner-trophy">🏆</div>'+
+    '<div class="winner-title">CHIẾN THẮNG!</div>'+
+    '<div class="winner-name">'+escHtml(w?w.name:'???')+'</div>'+
+    '<div class="winner-score">'+(w?w.totalScore||0:0)+' điểm</div>';
+  var pids=(data.playerOrder||Object.keys(data.players)).slice()
+    .sort(function(a,b){return (data.players[b].totalScore||0)-(data.players[a].totalScore||0);});
+  var medals=['🥇','🥈','🥉'];
+  document.getElementById('admin-final-scores').innerHTML=pids.map(function(pid,i){
+    var p=data.players[pid];
+    return '<div class="player-row"><div class="player-row-header">'+
+      '<span>'+(medals[i]||(i+1)+'.')+'</span>'+
+      '<span class="player-name">'+escHtml(p.name)+'</span>'+
+      '<span class="player-score-total">'+(p.totalScore||0)+' điểm</span>'+
+      '</div></div>';
+  }).join('');
+}
+
+function onRoomUpdate(data) {
+  G.roomData=data;
+  if(data.flip7Winner && data.flip7Winner!==G.lastFlip7){
+    G.lastFlip7=data.flip7Winner;
+    var w=data.players[data.flip7Winner]; if(w) showFlip7Banner(w.name);
+  }
+  if(data.gameStatus==='waiting') renderLobby(data);
+  else if(data.gameStatus==='playing') {
+    renderGameView(data);
+    // Auto start new round when endingRound
+    if(data.roundStatus==='endingRound') setTimeout(function(){ startNewRound(G.roomId); },3500);
+  }
+  else if(data.gameStatus==='finished') renderWinner(data);
+}
+
+function startListening() {
+  if(G.unsub) G.unsub();
+  G.unsub=subscribeRoom(G.roomId, onRoomUpdate);
+}
+
+// ── Event listeners ───────────────────────────────────────────
+document.getElementById('btn-create').addEventListener('click', async function(){
+  var name=document.getElementById('admin-name').value.trim();
+  var err=document.getElementById('create-error'); err.style.display='none';
+  if(!name){ err.textContent='Vui lòng nhập tên!'; err.style.display='block'; return; }
+  if(!db){ err.textContent='Firebase chưa được cấu hình! Điền FIREBASE_CONFIG vào đầu script.'; err.style.display='block'; return; }
+  setLoading('btn-create',true);
+  try {
+    var r=await createRoom(name);
+    G.roomId=r.roomId; G.adminId=r.playerId; G.adminName=name;
+    saveSession(); startListening();
+  } catch(e){ err.textContent=e.message; err.style.display='block'; }
+  finally{ setLoading('btn-create',false); }
+});
+
+document.getElementById('admin-room-code').addEventListener('click', function(){
+  if(!G.roomId) return;
+  navigator.clipboard.writeText(G.roomId)
+    .then(function(){ showToast('Đã sao chép mã phòng!','success',2000); })
+    .catch(function(){ showToast(G.roomId,'info',5000); });
+});
+
+document.getElementById('btn-start').addEventListener('click', async function(){
+  setLoading('btn-start',true);
+  try { await startGame(G.roomId,G.adminId); }
+  catch(e){ showToast(e.message,'danger'); }
+  finally{ setLoading('btn-start',false); }
+});
+
+document.getElementById('btn-force-end-round').addEventListener('click', async function(){
+  if(!confirm('Kết thúc vòng này ngay?')||!G.roomData||!db) return;
+  var data=G.roomData, pids=data.playerOrder||Object.keys(data.players);
+  var u={roundStatus:'endingRound'};
+  pids.forEach(function(pid){ if(data.players[pid].status==='playing') u['players.'+pid+'.status']='stopped'; });
+  try{ await db.collection('rooms').doc(G.roomId).update(u); showToast('Đã kết thúc vòng!','warn'); }
+  catch(e){ showToast(e.message,'danger'); }
+});
+
+document.getElementById('btn-reset-game').addEventListener('click', async function(){
+  if(!confirm('Đặt lại game về phòng chờ?')||!G.roomData||!db) return;
+  var data=G.roomData, pids=data.playerOrder||Object.keys(data.players);
+  var u={gameStatus:'waiting',round:1,currentPlayer:null,deck:[],roundStatus:'playing',flip7Winner:null};
+  pids.forEach(function(pid){
+    u['players.'+pid+'.totalScore']=0; u['players.'+pid+'.roundScore']=0;
+    u['players.'+pid+'.cardsInRound']=[]; u['players.'+pid+'.status']='playing';
+    u['players.'+pid+'.hasSecondChance']=false;
   });
+  try{ await db.collection('rooms').doc(G.roomId).update(u); showToast('Đã đặt lại!','info'); }
+  catch(e){ showToast(e.message,'danger'); }
+});
 
-  // ─── Reset game ───────────────────────────────────────────────
-  document.getElementById('btn-reset-game').addEventListener('click', async function () {
-    if (!confirm('Đặt lại game và về phòng chờ?')) return;
-    var data = state.roomData;
-    if (!data) return;
+document.getElementById('btn-new-game').addEventListener('click', async function(){
+  if(!confirm('Bắt đầu game mới?')) return;
+  try{ await startGame(G.roomId,G.adminId); }
+  catch(e){ showToast(e.message,'danger'); }
+});
 
-    var playerIds = data.playerOrder || Object.keys(data.players);
-    var updates = {
-      gameStatus: 'waiting',
-      round: 1,
-      currentPlayer: null,
-      deck: [],
-      roundStatus: 'playing',
-      flip7Winner: null,
-    };
-    playerIds.forEach(function (pid) {
-      updates['players.' + pid + '.totalScore'] = 0;
-      updates['players.' + pid + '.roundScore'] = 0;
-      updates['players.' + pid + '.cardsInRound'] = [];
-      updates['players.' + pid + '.status'] = 'playing';
-      updates['players.' + pid + '.hasSecondChance'] = false;
-    });
-
-    try {
-      await db.collection('rooms').doc(state.roomId).update(updates);
-      UIModule.showToast('Đã đặt lại game!', 'info');
-    } catch (e) {
-      UIModule.showToast(e.message, 'danger');
-    }
-  });
-
-  // ─── New game ─────────────────────────────────────────────────
-  document.getElementById('btn-new-game').addEventListener('click', async function () {
-    if (!confirm('Bắt đầu game mới với cùng phòng?')) return;
-    try {
-      await GameModule.startGame(state.roomId, state.adminId);
-    } catch (e) {
-      UIModule.showToast(e.message, 'danger');
-    }
-  });
-
-  // ─── Home button ─────────────────────────────────────────────
-  document.getElementById('btn-home').addEventListener('click', function () {
-    location.href = 'admin.html';
-  });
-
-  // ─── Firebase listener ────────────────────────────────────────
-  function startListening() {
-    if (state.unsubscribe) state.unsubscribe();
-    state.unsubscribe = GameModule.subscribeToRoom(state.roomId, onRoomUpdate);
-  }
-
-  var lastFlip7Winner = null;
-
-  function onRoomUpdate(data) {
-    state.roomData = data;
-
-    // Flip7 banner (chỉ hiện 1 lần mỗi event)
-    if (data.flip7Winner && data.flip7Winner !== lastFlip7Winner) {
-      lastFlip7Winner = data.flip7Winner;
-      var winner = data.players[data.flip7Winner];
-      if (winner) UIModule.showFlip7Banner(winner.name);
-    }
-
-    if (data.gameStatus === 'waiting') {
-      renderLobby(data);
-    } else if (data.gameStatus === 'playing') {
-      renderGameView(data);
-    } else if (data.gameStatus === 'finished') {
-      renderWinner(data);
-    }
-  }
-
-  // ─── Render: Lobby ────────────────────────────────────────────
-  function renderLobby(data) {
-    showScreen('screen-admin-lobby');
-    document.getElementById('admin-room-code').textContent = state.roomId || '------';
-
-    var players = data.players || {};
-    var playerIds = data.playerOrder || Object.keys(players);
-    var count = playerIds.length;
-
-    document.getElementById('admin-player-count').textContent = count + '/15';
-
-    var listEl = document.getElementById('admin-player-list');
-    listEl.innerHTML = playerIds.map(function (pid) {
-      var p = players[pid];
-      if (!p) return '';
-      return '<div class="player-row" style="margin-bottom:8px; display:flex; align-items:center; gap:10px;">'
-        + '<span>' + (p.isAdmin ? '👑' : '👤') + '</span>'
-        + '<span style="flex:1; font-weight:700;">' + UIModule.escapeHtml(p.name) + '</span>'
-        + (p.isAdmin ? '<span style="font-size:0.75rem;color:var(--gold);">Admin</span>' : '')
-        + '</div>';
-    }).join('');
-
-    var canStart = count >= 2;
-    document.getElementById('btn-start').disabled = !canStart;
-    document.getElementById('admin-waiting-msg').style.display = canStart ? 'none' : 'block';
-    document.getElementById('start-hint').style.display = canStart ? 'none' : 'block';
-  }
-
-  // ─── Render: Game view ────────────────────────────────────────
-  function renderGameView(data) {
-    showScreen('screen-admin-game');
-
-    document.getElementById('admin-name-display').textContent = state.adminName || 'Admin';
-    document.getElementById('admin-room-display').textContent = state.roomId || '—';
-    document.getElementById('admin-round').textContent = data.round || 1;
-
-    var cp = data.currentPlayer ? data.players[data.currentPlayer] : null;
-    document.getElementById('current-turn-display').textContent = cp ? cp.name : '—';
-
-    var statusEl = document.getElementById('admin-turn-status');
-    if (data.roundStatus === 'endingRound') {
-      statusEl.textContent = '🎉 Vòng đang kết thúc...';
-      statusEl.className = 'turn-indicator other-turn';
-    } else {
-      statusEl.textContent = cp ? (cp.name + ' đang quyết định...') : 'Đang chờ...';
-      statusEl.className = 'turn-indicator';
-    }
-
-    document.getElementById('deck-count').textContent = (data.deck || []).length;
-
-    var playerIds = data.playerOrder || Object.keys(data.players);
-    var sorted = playerIds.slice().sort(function (a, b) {
-      return (data.players[b].totalScore || 0) - (data.players[a].totalScore || 0);
-    });
-
-    var el = document.getElementById('admin-game-players');
-    el.innerHTML = sorted.map(function (pid) {
-      return UIModule.renderPlayerRow(pid, data.players[pid], data.currentPlayer, pid === state.adminId);
-    }).join('');
-  }
-
-  // ─── Render: Winner ───────────────────────────────────────────
-  function renderWinner(data) {
-    showScreen('screen-admin-winner');
-    var winner = data.winner ? data.players[data.winner] : null;
-
-    document.getElementById('admin-winner-content').innerHTML =
-      '<div class="winner-trophy">🏆</div>'
-      + '<div class="winner-title">CHIẾN THẮNG!</div>'
-      + '<div class="winner-name">' + UIModule.escapeHtml(winner ? winner.name : '???') + '</div>'
-      + '<div class="winner-score">' + (winner ? winner.totalScore || 0 : 0) + ' điểm</div>';
-
-    var playerIds = data.playerOrder || Object.keys(data.players);
-    var sorted = playerIds.slice().sort(function (a, b) {
-      return (data.players[b].totalScore || 0) - (data.players[a].totalScore || 0);
-    });
-    var medals = ['🥇','🥈','🥉'];
-
-    document.getElementById('admin-final-scores').innerHTML = sorted.map(function (pid, i) {
-      var p = data.players[pid];
-      return '<div class="player-row">'
-        + '<div class="player-row-header">'
-        + '<span>' + (medals[i] || (i + 1) + '.') + '</span>'
-        + '<span class="player-name">' + UIModule.escapeHtml(p.name) + '</span>'
-        + '<span class="player-score-total">' + (p.totalScore || 0) + ' điểm</span>'
-        + '</div></div>';
-    }).join('');
-  }
-
-  // ─── Auto-reconnect từ session ────────────────────────────────
-  var sess = loadAdminSession();
-  if (sess && sess.roomId && sess.adminId) {
-    state.roomId = sess.roomId;
-    state.adminId = sess.adminId;
-    state.adminName = sess.adminName;
-    document.getElementById('admin-name').value = sess.adminName || '';
-
-    db.collection('rooms').doc(sess.roomId).get()
-      .then(function (snap) {
-        if (snap.exists) {
-          startListening();
-        } else {
-          // Phòng không tồn tại nữa, xóa session
-          sessionStorage.removeItem('flip7_admin');
-        }
-      })
-      .catch(function (err) {
-        console.warn('Reconnect failed:', err);
-      });
-  }
-
-}); // end DOMContentLoaded
+// ── Auto reconnect ────────────────────────────────────────────
+var sess=loadSession();
+if(sess&&sess.roomId&&sess.adminId&&db){
+  G.roomId=sess.roomId; G.adminId=sess.adminId; G.adminName=sess.adminName;
+  document.getElementById('admin-name').value=sess.adminName||'';
+  db.collection('rooms').doc(sess.roomId).get()
+    .then(function(snap){ if(snap.exists) startListening(); else sessionStorage.removeItem('f7admin'); })
+    .catch(function(e){ console.warn('Reconnect failed:',e); });
+}
 </script>
 </body>
 </html>
