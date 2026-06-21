@@ -6,12 +6,12 @@
 
 const firebaseConfig = {
   apiKey: "AIzaSyAjbj519mJnX18lcMavPTgkAC-OQ4L5dsY",
-    authDomain: "flip-45e37.firebaseapp.com",
-    projectId: "flip-45e37",
-    storageBucket: "flip-45e37.firebasestorage.app",
-    messagingSenderId: "774430389314",
-    appId: "1:774430389314:web:114bd49e5794b3dcb329db",
-    measurementId: "G-JT42H3S38R"
+  authDomain: "flip-45e37.firebaseapp.com",
+  projectId: "flip-45e37",
+  storageBucket: "flip-45e37.firebasestorage.app",
+  messagingSenderId: "774430389314",
+  appId: "1:774430389314:web:114bd49e5794b3dcb329db",
+  measurementId: "G-JT42H3S38R"
 };
 
 // ── Kiểm tra config trước khi init ───────────────────
