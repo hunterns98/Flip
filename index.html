@@ -167,11 +167,6 @@
 <script>
 window.addEventListener('DOMContentLoaded', function () {
 
-  if (typeof UIModule === 'undefined' || typeof GameModule === 'undefined') {
-    console.error('Modules chưa load!');
-    return;
-  }
-
   // ─── State ─────────────────────────────────────────────────
   const state = {
     roomId: null,

@@ -4,6 +4,12 @@ const { createStorableDeck, cardToStorable, storableToCard,
         calculateRoundScore, checkFlip7, hasNumberCard,
         hasSecondChance, removeSecondChance, SPECIAL_CARDS } = window.DeckModule;
 
+// Guard: throw friendly error if Firebase not configured
+function requireDb() {
+  if (!window.db) throw new Error('Firebase chưa được cấu hình. Hãy điền thông tin vào firebase.js');
+  return window.db;
+}
+
 const TARGET_SCORE = 200;
 const FLIP7_BONUS = 15;
 
@@ -48,12 +54,12 @@ async function createRoom(adminName) {
     }
   };
 
-  await db.collection('rooms').doc(roomId).set({ ...roomData, players: playerData });
+  await requireDb().collection('rooms').doc(roomId).set({ ...roomData, players: playerData });
   return { roomId, playerId: adminId };
 }
 
 async function joinRoom(roomId, playerName) {
-  const roomRef = db.collection('rooms').doc(roomId);
+  const roomRef = requireDb().collection('rooms').doc(roomId);
   const snap = await roomRef.get();
 
   if (!snap.exists) throw new Error('Phòng không tồn tại!');
@@ -84,7 +90,7 @@ async function joinRoom(roomId, playerName) {
 }
 
 async function startGame(roomId, adminId) {
-  const roomRef = db.collection('rooms').doc(roomId);
+  const roomRef = requireDb().collection('rooms').doc(roomId);
   const snap = await roomRef.get();
   const data = snap.data();
 
@@ -120,9 +126,9 @@ async function startGame(roomId, adminId) {
 // ─── Turn actions ────────────────────────────────────────────────────────────
 
 async function flipCard(roomId, playerId) {
-  const roomRef = db.collection('rooms').doc(roomId);
+  const roomRef = requireDb().collection('rooms').doc(roomId);
 
-  return db.runTransaction(async (tx) => {
+  return requireDb().runTransaction(async (tx) => {
     const snap = await tx.get(roomRef);
     const data = snap.data();
 
@@ -312,9 +318,9 @@ async function processCard(tx, roomRef, data, playerId, drawnCard, updates) {
 }
 
 async function applyFreeze(roomId, currentPlayerId, targetPlayerId) {
-  const roomRef = db.collection('rooms').doc(roomId);
+  const roomRef = requireDb().collection('rooms').doc(roomId);
 
-  return db.runTransaction(async (tx) => {
+  return requireDb().runTransaction(async (tx) => {
     const snap = await tx.get(roomRef);
     const data = snap.data();
 
@@ -359,9 +365,9 @@ async function applyFreeze(roomId, currentPlayerId, targetPlayerId) {
 }
 
 async function stopTurn(roomId, playerId) {
-  const roomRef = db.collection('rooms').doc(roomId);
+  const roomRef = requireDb().collection('rooms').doc(roomId);
 
-  return db.runTransaction(async (tx) => {
+  return requireDb().runTransaction(async (tx) => {
     const snap = await tx.get(roomRef);
     const data = snap.data();
 
@@ -558,7 +564,7 @@ async function startNewRound(roomRef, prevData, prevUpdates) {
 
 // Subscribe to room updates
 function subscribeToRoom(roomId, callback) {
-  return db.collection('rooms').doc(roomId).onSnapshot(snap => {
+  return requireDb().collection('rooms').doc(roomId).onSnapshot(snap => {
     if (snap.exists) callback(snap.data());
   });
 }

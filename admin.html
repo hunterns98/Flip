@@ -129,13 +129,6 @@
 // tất cả scripts đã chạy xong trước khi addEventListener được gọi
 window.addEventListener('DOMContentLoaded', function () {
 
-  // ─── Kiểm tra modules đã load ────────────────────────────────
-  if (typeof UIModule === 'undefined' || typeof GameModule === 'undefined') {
-    console.error('Modules chưa load! Kiểm tra firebase.js / game.js / ui.js');
-    document.body.innerHTML = '<div style="color:red;padding:40px;font-size:1.2rem;">⚠️ Lỗi load scripts. Kiểm tra console và cấu hình firebase.js.</div>';
-    return;
-  }
-
   // ─── State ────────────────────────────────────────────────────
   var state = {
     roomId: null,
